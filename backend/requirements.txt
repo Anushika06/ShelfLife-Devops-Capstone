@@ -1,0 +1,14 @@
+# Runtime dependencies for the ShelfLife API (installed into the Docker image).
+fastapi==0.143.0
+# Plain uvicorn (h11 HTTP parser). uvicorn[standard] pulls httptools 0.9.0, which hung
+# every request in the container during testing, so the parser is pinned to h11.
+uvicorn==0.54.0
+uvloop==0.23.0; sys_platform != "win32"
+sqlalchemy==2.1.4
+psycopg[binary]==3.3.6
+alembic==1.20.0
+pydantic==2.14.1
+pydantic-settings==2.15.0
+prometheus-client==0.26.0
+prometheus-fastapi-instrumentator==8.1.0
+tzdata==2026.5
