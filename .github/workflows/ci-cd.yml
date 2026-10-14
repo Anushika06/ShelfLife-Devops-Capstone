@@ -1,0 +1,343 @@
+name: ShelfLife CI/CD
+
+# Pipeline (each stage only runs if the previous gate passed):
+#   test (pytest + migrations on PostgreSQL) ┐
+#   frontend build                           ├─> image build ─> Trivy gate ─> push to GHCR (:<git sha>)
+#   terraform validate, helm lint            ┘                                   │
+#                                       deploy to a throw-away kind cluster  <──┘ (push to main only)
+#                                                     │
+#                             GitOps promote: commit the new SHA to values-gitops.yaml (Argo CD syncs it)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs on main are queued (never cancelled) so GitOps promotions happen in commit order.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "24"
+  TRIVY_VERSION: "0.75.0"
+  HELM_VERSION: "v4.3.0"
+  TERRAFORM_VERSION: "1.16.5"
+  TRAEFIK_CHART_VERSION: "41.7.1"
+
+jobs:
+  # ---------------------------------------------------------------- tests
+  backend-test:
+    name: Backend - lint, pytest, migrations
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: shelflife_ci
+          POSTGRES_USER: shelflife
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U shelflife -d shelflife_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff lint and format check
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Run pytest (isolated SQLite test database)
+        # A failing test fails this job, and every later job depends on it.
+        run: pytest -v --junitxml=pytest-report.xml
+
+      - name: Alembic upgrade / downgrade / upgrade on real PostgreSQL
+        env:
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_NAME: shelflife_ci
+          DB_USER: shelflife
+          DB_PASSWORD: ci-only-password
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+          alembic current
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pytest-report
+          path: backend/pytest-report.xml
+
+  frontend-build:
+    name: Frontend - npm build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+  iac-validate:
+    name: Terraform validate + Helm lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - name: terraform fmt / init / validate (no AWS credentials needed)
+        working-directory: terraform
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false -input=false
+          terraform validate
+      - uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: helm lint + template every values file
+        run: |
+          for values in values-kind.yaml values-eks.yaml values-gitops.yaml; do
+            helm lint helm/shelflife -f "helm/shelflife/$values" \
+              --set backend.image.tag=ci --set frontend.image.tag=ci
+            helm template shelflife helm/shelflife -f "helm/shelflife/$values" \
+              --set backend.image.tag=ci --set frontend.image.tag=ci > /dev/null
+          done
+
+  # ------------------------------------------------- images: build, scan, push
+  images:
+    name: Image ${{ matrix.component }} - build, Trivy, GHCR
+    needs: [backend-test, frontend-build, iac-validate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Image name (GHCR requires a lowercase owner)
+        id: meta
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/shelflife-${{ matrix.component }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build image tagged with the commit SHA
+        uses: docker/build-push-action@v7
+        with:
+          context: ./${{ matrix.component }}
+          load: true
+          push: false
+          tags: ${{ steps.meta.outputs.image }}:${{ github.sha }}
+          build-args: APP_VERSION=${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+
+      - name: Install Trivy ${{ env.TRIVY_VERSION }} (checksum-verified release)
+        run: |
+          base="https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}"
+          curl -fsSLO "${base}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -fsSLO "${base}/trivy_${TRIVY_VERSION}_checksums.txt"
+          grep " trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz$" "trivy_${TRIVY_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" trivy
+          sudo mv trivy /usr/local/bin/trivy
+          trivy --version
+
+      - name: Trivy scan - fail on HIGH/CRITICAL
+        run: |
+          set +e
+          trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+            --format table --output trivy-${{ matrix.component }}.txt \
+            "${{ steps.meta.outputs.image }}:${{ github.sha }}"
+          rc=$?
+          set -e
+          cat trivy-${{ matrix.component }}.txt
+          {
+            echo "### Trivy: ${{ matrix.component }} image (HIGH/CRITICAL, fixable)"
+            echo '```'
+            cat trivy-${{ matrix.component }}.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+
+      - name: Upload Trivy report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: trivy-${{ matrix.component }}
+          path: trivy-${{ matrix.component }}.txt
+
+      - name: Log in to GHCR with the workflow's GITHUB_TOKEN
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push ${{ matrix.component }}:<sha> (no "latest" tag)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker push "${{ steps.meta.outputs.image }}:${{ github.sha }}"
+
+  # --------------------------------------------- deploy test on a kind cluster
+  deploy-kind:
+    name: Deploy to kind with Helm + smoke test
+    needs: images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.15.1
+        with:
+          cluster_name: shelflife-ci
+          config: k8s/kind-config.yaml
+
+      - uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Install Traefik Ingress controller
+        run: |
+          helm repo add traefik https://traefik.github.io/charts
+          helm upgrade --install traefik traefik/traefik --version "$TRAEFIK_CHART_VERSION" \
+            -n traefik --create-namespace -f k8s/ingress-controller/traefik-values-kind.yaml --wait --timeout 5m
+
+      - name: Namespace + GHCR pull secret (works for private packages too)
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl -n shelflife create secret docker-registry ghcr-pull \
+            --docker-server=ghcr.io --docker-username="${{ github.actor }}" \
+            --docker-password="${{ secrets.GITHUB_TOKEN }}"
+
+      - name: helm upgrade --install (images tagged with this commit SHA)
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          helm upgrade --install shelflife ./helm/shelflife -n shelflife \
+            -f helm/shelflife/values-kind.yaml \
+            --set backend.image.repository="ghcr.io/${owner}/shelflife-backend" \
+            --set backend.image.tag="${GITHUB_SHA}" \
+            --set frontend.image.repository="ghcr.io/${owner}/shelflife-frontend" \
+            --set frontend.image.tag="${GITHUB_SHA}" \
+            --set "imagePullSecrets[0].name=ghcr-pull" \
+            --wait --timeout 8m
+          helm list -n shelflife
+          kubectl get pods,svc,ingress -n shelflife -o wide
+
+      - name: helm test
+        run: helm test shelflife -n shelflife --logs
+
+      - name: Smoke test through the Ingress (/ -> frontend, /api -> backend)
+        run: |
+          host=shelflife.localtest.me
+          url="http://${host}:8088"
+          resolve="--resolve ${host}:8088:127.0.0.1"
+          curl -fsS $resolve "$url/" | grep -q "<title>ShelfLife</title>"
+          created=$(curl -fsS $resolve -X POST "$url/api/items" -H 'Content-Type: application/json' \
+            -d '{"name":"CI smoke test","category":"Other","location":"Pantry","quantity":1,"unit":"pcs"}')
+          echo "created: $created"
+          id=$(echo "$created" | jq -r .id)
+          curl -fsS $resolve "$url/api/items/$id" | jq -e '.name == "CI smoke test"'
+          curl -fsS $resolve "$url/api/summary" | jq -e '.total >= 1'
+          curl -fsS $resolve -X DELETE -o /dev/null -w "DELETE -> %{http_code}\n" "$url/api/items/$id"
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          kubectl get all -n shelflife -o wide || true
+          kubectl get events -n shelflife --sort-by=.lastTimestamp | tail -n 40 || true
+          kubectl describe pods -n shelflife | tail -n 80 || true
+          kubectl logs -n shelflife -l app.kubernetes.io/component=backend --tail=80 || true
+
+  # ------------------------------------------------------------ GitOps promote
+  gitops-promote:
+    name: GitOps - promote SHA for Argo CD
+    needs: deploy-kind
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install yq
+        run: |
+          sudo curl -fsSL \
+            https://github.com/mikefarah/yq/releases/download/v4.47.2/yq_linux_amd64 \
+            -o /usr/local/bin/yq
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+
+      - name: Write image repository + tag into helm/shelflife/values-gitops.yaml
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          export BE="ghcr.io/${owner}/shelflife-backend" FE="ghcr.io/${owner}/shelflife-frontend"
+          yq -i '
+            .backend.image.repository = strenv(BE) |
+            .backend.image.tag = strenv(GITHUB_SHA) |
+            .frontend.image.repository = strenv(FE) |
+            .frontend.image.tag = strenv(GITHUB_SHA)
+          ' helm/shelflife/values-gitops.yaml
+          git diff --stat
+
+      - name: Commit and push (commits made with GITHUB_TOKEN do not trigger a new run)
+        run: |
+          if git diff --quiet; then
+            echo "values-gitops.yaml already points at ${GITHUB_SHA}"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(gitops): promote images ${GITHUB_SHA::7} to shelflife-gitops [skip ci]"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          echo "could not push the GitOps promotion" >&2
+          exit 1
