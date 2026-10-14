@@ -1,0 +1,623 @@
+/* ShelfLife — fridge-ice background, slate ink, basil actions; tomato and turmeric
+   are reserved for expiry urgency so colour always carries meaning. */
+
+:root {
+  --ice: #eef4f2;
+  --shelf: #ffffff;
+  --ink: #1f2a2e;
+  --ink-soft: #52625f;
+  --line: #cad8d3;
+  --basil: #2f7d5b;
+  --basil-deep: #22603f;
+  --tomato: #d6453d;
+  --tomato-wash: #fbe7e5;
+  --turmeric: #e8a317;
+  --turmeric-wash: #fdf2d8;
+  --leaf-wash: #e0f0e8;
+  --focus: #1b6fd1;
+
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
+
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.563rem;
+  --step-3: 2.441rem;
+
+  --radius-jar: 14px;
+  --radius-control: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ice);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.5;
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  margin: 0;
+  line-height: 1.1;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 16px 96px;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand h1 {
+  font-size: var(--step-3);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+}
+
+/* ---------- buttons ---------- */
+
+.button {
+  border: 1.5px solid var(--ink);
+  background: var(--shelf);
+  border-radius: var(--radius-control);
+  padding: 9px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--leaf-wash);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.button.primary {
+  background: var(--basil);
+  border-color: var(--basil);
+  color: #fff;
+}
+
+.button.primary:hover {
+  background: var(--basil-deep);
+}
+
+.button.ghost {
+  border-color: transparent;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.button.ghost:hover {
+  background: var(--leaf-wash);
+}
+
+.button.danger {
+  background: var(--tomato);
+  border-color: var(--tomato);
+  color: #fff;
+}
+
+.button.small {
+  padding: 5px 10px;
+  font-size: 0.9rem;
+}
+
+/* ---------- tallies (counts that double as filters) ---------- */
+
+.tallies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 8px;
+}
+
+.tally {
+  border: 1.5px solid var(--line);
+  background: var(--shelf);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.tally strong {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  margin-right: 4px;
+}
+
+.tally.is-active {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.tally-expired strong {
+  color: var(--tomato);
+}
+
+.tally-expiring strong {
+  color: #a26f00;
+}
+
+.tally-low strong {
+  color: var(--basil);
+}
+
+/* ---------- use-first shelf (the signature element) ---------- */
+
+.use-first {
+  margin: 24px 0 40px;
+}
+
+.use-first h2 {
+  font-size: var(--step-2);
+  margin-bottom: 14px;
+}
+
+.use-first-empty {
+  margin: 0;
+  padding: 18px 20px;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-jar);
+  color: var(--ink-soft);
+  max-width: 70ch;
+}
+
+.shelf {
+  list-style: none;
+  margin: 0;
+  padding: 12px 2px 18px;
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  /* the shelf board the jars stand on */
+  background: linear-gradient(var(--ink), var(--ink)) bottom / 100% 6px no-repeat;
+}
+
+.jar {
+  position: relative;
+  flex: 0 0 180px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 22px 14px 14px;
+  background: var(--shelf);
+  border: 2px solid var(--ink);
+  border-radius: 10px 10px var(--radius-jar) var(--radius-jar);
+}
+
+.jar-lid {
+  position: absolute;
+  top: -9px;
+  left: 18px;
+  right: 18px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--ink);
+}
+
+.jar-countdown {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-2);
+  line-height: 1.1;
+}
+
+.jar-expired {
+  background: var(--tomato-wash);
+}
+
+.jar-expired .jar-countdown {
+  color: var(--tomato);
+}
+
+.jar-expiring {
+  background: var(--turmeric-wash);
+}
+
+.jar-expiring .jar-countdown {
+  color: #8a5d00;
+}
+
+.jar-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.jar-meta {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.jar-action {
+  margin-top: 8px;
+  align-self: flex-start;
+  border: 1.5px solid var(--ink);
+  background: var(--shelf);
+  border-radius: var(--radius-control);
+  padding: 3px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.jar-action:hover {
+  background: var(--leaf-wash);
+}
+
+/* ---------- inventory ---------- */
+
+.inventory-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.inventory-head h2 {
+  font-size: var(--step-2);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.segmented button {
+  border: 0;
+  border-right: 1.5px solid var(--ink);
+  background: var(--shelf);
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.segmented button:last-child {
+  border-right: 0;
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--ink);
+  color: #fff;
+}
+
+.segmented .count {
+  margin-left: 6px;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.search input {
+  width: min(280px, 100%);
+  min-width: 240px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 7px 12px;
+  background: var(--shelf);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 0.9fr) minmax(0, 1.4fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 14px 4px 14px 14px;
+  border-bottom: 1px solid var(--line);
+  border-left: 5px solid transparent;
+}
+
+.row-expired {
+  border-left-color: var(--tomato);
+}
+
+.row-expiring {
+  border-left-color: var(--turmeric);
+}
+
+.row-name {
+  display: block;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.row-sub {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.row-qty {
+  display: flex;
+  flex-direction: column;
+}
+
+.flag-low {
+  color: var(--basil-deep);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.row-expiry {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.row-date {
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.pill {
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1.5px solid currentColor;
+}
+
+.pill-expired {
+  color: #b3312a;
+  background: var(--tomato-wash);
+}
+
+.pill-expiring {
+  color: #835800;
+  background: var(--turmeric-wash);
+}
+
+.pill-fresh {
+  color: var(--basil-deep);
+  background: var(--leaf-wash);
+}
+
+.pill-no-date {
+  color: var(--ink-soft);
+}
+
+.row-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.list-message {
+  padding: 32px 0;
+  max-width: 60ch;
+}
+
+.list-message p {
+  margin: 0 0 12px;
+}
+
+/* ---------- banner, footer, toast ---------- */
+
+.banner-error {
+  margin-top: 16px;
+  padding: 14px 18px;
+  border: 2px solid var(--tomato);
+  border-radius: var(--radius-control);
+  background: var(--tomato-wash);
+}
+
+.banner-error p {
+  margin: 0 0 8px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.footer a {
+  color: var(--ink);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  background: var(--ink);
+  color: #fff;
+  border-radius: var(--radius-control);
+  padding: 10px 18px;
+  font-weight: 700;
+}
+
+.toast:empty {
+  display: none;
+}
+
+/* ---------- add / edit sheet ---------- */
+
+.sheet {
+  width: min(560px, calc(100% - 32px));
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-jar);
+  padding: 0;
+  background: var(--shelf);
+  color: var(--ink);
+}
+
+.sheet::backdrop {
+  background: rgb(31 42 46 / 55%);
+}
+
+.sheet form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  padding: 24px;
+}
+
+.sheet h2 {
+  grid-column: 1 / -1;
+  font-size: var(--step-2);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  font-weight: 400;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.field-wide {
+  grid-column: 1 / -1;
+}
+
+.form-error {
+  margin: 0;
+  color: #b3312a;
+  font-weight: 700;
+}
+
+.sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 760px) {
+  .brand h1 {
+    font-size: var(--step-2);
+  }
+
+  .row {
+    grid-template-columns: 1fr auto;
+    padding-right: 0;
+  }
+
+  .row-main {
+    grid-column: 1 / -1;
+  }
+
+  .row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .sheet form {
+    grid-template-columns: 1fr;
+  }
+
+  .segmented {
+    width: 100%;
+  }
+
+  .segmented button {
+    flex: 1;
+  }
+
+  .search,
+  .search input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shelf {
+    scroll-behavior: auto;
+  }
+}
