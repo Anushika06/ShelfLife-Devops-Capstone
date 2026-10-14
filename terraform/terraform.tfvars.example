@@ -1,0 +1,24 @@
+# Copy to terraform.tfvars (git-ignored) and adjust. Contains NO credentials:
+# Terraform reads AWS credentials from your AWS CLI profile / environment.
+aws_region         = "ap-south-1"
+project_name       = "shelflife"
+cluster_name       = "shelflife-eks"
+kubernetes_version = "1.36"
+
+# Replace with your public IP (e.g. "203.0.113.25/32") to restrict the EKS API endpoint.
+cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
+
+node_instance_types = ["t3.medium"]
+node_capacity_type  = "ON_DEMAND" # or "SPOT" to cut node cost (may be interrupted)
+node_desired_size   = 2
+node_min_size       = 1
+node_max_size       = 3
+node_disk_size_gb   = 20
+
+# Optional cost alarm (AWS Budgets). Leave "" to skip.
+budget_alert_email = ""
+budget_limit_usd   = 25
+
+extra_tags = {
+  Owner = "your-name"
+}
