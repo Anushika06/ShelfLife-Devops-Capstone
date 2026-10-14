@@ -84,7 +84,8 @@ metrics:
     # Rendered only if the Prometheus Operator CRD exists in the cluster.
     enabled: true
     interval: 15s
-    labels: {}
+    labels:
+      release: monitoring
   grafanaDashboard:
     # ConfigMap picked up by the Grafana sidecar of kube-prometheus-stack.
     enabled: false
