@@ -1,0 +1,14 @@
+{{- if .Values.metrics.grafanaDashboard.enabled }}
+# The kube-prometheus-stack Grafana sidecar imports every ConfigMap labelled
+# grafana_dashboard=1 (monitoring/grafana-values.yaml lets it search all namespaces).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shelflife.fullname" . }}-grafana-dashboard
+  labels:
+    {{- include "shelflife.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  shelflife.json: |-
+{{ .Files.Get "dashboards/shelflife.json" | indent 4 }}
+{{- end }}

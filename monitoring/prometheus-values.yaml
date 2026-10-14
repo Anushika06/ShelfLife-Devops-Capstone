@@ -1,0 +1,54 @@
+# kube-prometheus-stack (prometheus-community) 92.3.1 - Prometheus side.
+# Installed together with grafana-values.yaml as ONE release:
+#   helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+#     --version 92.3.1 -n monitoring --create-namespace \
+#     -f monitoring/prometheus-values.yaml -f monitoring/grafana-values.yaml --wait --timeout 10m
+
+prometheus:
+  # Reachable through the same Traefik Ingress as the app (more stable than
+  # kubectl port-forward for a recorded demo): http://prometheus.localtest.me:8088
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - prometheus.localtest.me
+    paths:
+      - /
+    pathType: Prefix
+  prometheusSpec:
+    # Pick up ServiceMonitors from every namespace, even ones without the
+    # "release: monitoring" label (our chart's ServiceMonitor lives in shelflife/shelflife-gitops).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorNamespaceSelector: {}
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    scrapeInterval: 15s
+    # Short retention: this is a demo cluster.
+    retention: 2d
+    resources:
+      requests:
+        cpu: 100m
+        memory: 400Mi
+      limits:
+        memory: 1Gi
+
+# Not needed for the capstone; disabling saves memory on kind / small EKS nodes.
+alertmanager:
+  enabled: false
+
+# Control-plane components are not scrapeable on EKS (managed) and are noisy on
+# kind; disabling them keeps the Prometheus Targets page about the application.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi

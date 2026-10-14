@@ -1,0 +1,38 @@
+# kube-prometheus-stack 92.3.1 - Grafana side (the chart bundles Grafana as a
+# subchart, so these keys live under "grafana:"). Use with prometheus-values.yaml.
+grafana:
+  enabled: true
+  # Admin login comes from a Secret you create (no password in Git):
+  #   kubectl -n monitoring create secret generic grafana-admin \
+  #     --from-literal=admin-user=admin --from-literal=admin-password='<choose-one>'
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  defaultDashboardsEnabled: true
+  # Imports the "ShelfLife API" dashboard shipped by the app chart
+  # (ConfigMap labelled grafana_dashboard=1 in the app namespace).
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+  service:
+    type: ClusterIP
+  # http://grafana.localtest.me:8088 through the Traefik Ingress
+  # (fallback: kubectl -n monitoring port-forward svc/monitoring-grafana 3001:80)
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - grafana.localtest.me
+    path: /
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 384Mi
