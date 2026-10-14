@@ -1,0 +1,15 @@
+line-length = 110
+target-version = "py313"
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
+# B008: FastAPI's Depends()/Query() in defaults is the framework's documented pattern.
+ignore = ["B008"]
+
+[lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[lint.isort]
+# backend/alembic/ is the migrations folder, not the alembic package.
+known-first-party = ["app"]
+known-third-party = ["alembic"]
