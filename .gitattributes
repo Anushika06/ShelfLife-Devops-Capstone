@@ -1,0 +1,16 @@
+# Keep Unix line endings for files that run inside Linux containers / CI,
+# even when the repository is checked out on Windows.
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.conf text eol=lf
+*.template text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.tf text eol=lf
+*.tpl text eol=lf
+*.pptx binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.mp4 binary

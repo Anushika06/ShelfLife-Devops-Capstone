@@ -1,0 +1,50 @@
+# --- secrets / local environment (never commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kubeconfig*
+.aws/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.db
+*.sqlite3
+
+# --- Node / frontend ---
+node_modules/
+dist/
+npm-debug.log*
+
+# --- Terraform (state can contain sensitive values) ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+
+# --- Helm / Kubernetes ---
+helm/**/charts/*.tgz
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# --- build artefacts ---
+*.zip
+trivy-*.txt
