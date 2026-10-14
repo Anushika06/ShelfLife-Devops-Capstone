@@ -1,0 +1,12 @@
+# Use images built on this machine (docker compose build) and loaded into kind:
+#   kind load docker-image shelflife-backend:local shelflife-frontend:local --name shelflife
+backend:
+  image:
+    repository: shelflife-backend
+    tag: local
+    pullPolicy: Never
+frontend:
+  image:
+    repository: shelflife-frontend
+    tag: local
+    pullPolicy: Never

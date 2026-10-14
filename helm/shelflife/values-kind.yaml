@@ -1,0 +1,8 @@
+# Local kind cluster, Helm CLI release in namespace "shelflife".
+#   helm upgrade --install shelflife ./helm/shelflife -n shelflife \
+#     -f helm/shelflife/values-kind.yaml --set backend.image.tag=<sha> --set frontend.image.tag=<sha>
+ingress:
+  host: shelflife.localtest.me
+metrics:
+  grafanaDashboard:
+    enabled: true

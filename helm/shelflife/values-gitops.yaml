@@ -1,0 +1,20 @@
+# Release managed by Argo CD (argocd/application.yaml) in namespace "shelflife-gitops".
+# The image block below is rewritten by the CI "gitops-promote" job after every
+# successful build on main: that commit is what Argo CD syncs (Git = desired state).
+backend:
+  image:
+    repository: ghcr.io/YOUR_GITHUB_USERNAME/shelflife-backend
+    tag: set-by-ci
+  config:
+    environment: gitops
+frontend:
+  image:
+    repository: ghcr.io/YOUR_GITHUB_USERNAME/shelflife-frontend
+    tag: set-by-ci
+ingress:
+  host: shelflife-gitops.localtest.me
+metrics:
+  grafanaDashboard:
+    enabled: false # the Helm CLI release already ships the dashboard
+tests:
+  enabled: false

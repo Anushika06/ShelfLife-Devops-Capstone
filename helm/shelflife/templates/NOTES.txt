@@ -1,0 +1,24 @@
+ShelfLife {{ .Chart.AppVersion }} is deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Images:
+  backend : {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
+  frontend: {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
+
+Check it:
+  kubectl get pods,svc,ingress -n {{ .Release.Namespace }}
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+{{- if .Values.ingress.enabled }}
+
+Through the Ingress (class "{{ .Values.ingress.className }}"):
+  http://{{ .Values.ingress.host }}:8088      (kind, using k8s/kind-config.yaml)
+  /api/* -> {{ include "shelflife.fullname" . }}-backend, / -> {{ include "shelflife.fullname" . }}-frontend
+{{- end }}
+
+Without an Ingress controller:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "shelflife.fullname" . }}-frontend 3000:80
+{{- if and .Values.metrics.serviceMonitor.enabled (not (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1/ServiceMonitor")) }}
+
+NOTE: metrics.serviceMonitor.enabled=true but the ServiceMonitor CRD is not installed,
+so no ServiceMonitor was created. Install monitoring first (see monitoring/README.md)
+and then run `helm upgrade` again.
+{{- end }}

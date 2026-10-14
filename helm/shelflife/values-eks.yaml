@@ -1,0 +1,15 @@
+# AWS EKS (cluster from terraform/). EKS has no EBS CSI driver installed by this
+# project's Terraform, so PostgreSQL uses ephemeral storage here: data survives pod
+# restarts of the backend, but not deletion of the postgres pod. Acceptable for a
+# short demo; production would use Amazon RDS or the EBS CSI add-on.
+postgres:
+  persistence:
+    enabled: false
+backend:
+  config:
+    environment: eks
+ingress:
+  host: shelflife.localtest.me
+metrics:
+  grafanaDashboard:
+    enabled: true

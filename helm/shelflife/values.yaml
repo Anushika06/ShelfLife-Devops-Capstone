@@ -1,0 +1,90 @@
+# Default values for the ShelfLife chart.
+# Environment-specific overrides live next to this file:
+#   values-kind.yaml          local kind cluster (Helm CLI release, namespace "shelflife")
+#   values-local-images.yaml  use images built locally and loaded with `kind load`
+#   values-eks.yaml           AWS EKS (no EBS CSI driver -> ephemeral Postgres storage)
+#   values-gitops.yaml        Argo CD release (namespace "shelflife-gitops"); image tags written by CI
+
+nameOverride: ""
+fullnameOverride: ""
+
+# e.g. [{name: ghcr-pull}] when the GHCR packages are private.
+imagePullSecrets: []
+
+backend:
+  image:
+    # REPLACE YOUR_GITHUB_USERNAME (lowercase) or override with --set / a values file.
+    repository: ghcr.io/YOUR_GITHUB_USERNAME/shelflife-backend
+    # Git commit SHA pushed by CI. Required: the chart refuses to render without it.
+    tag: ""
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  config:
+    environment: kubernetes
+    expiryWarningDays: 3
+    timezone: Asia/Kolkata
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 256Mi }
+  autoscaling:
+    enabled: false # needs metrics-server; when on, replicaCount is ignored
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+frontend:
+  image:
+    repository: ghcr.io/YOUR_GITHUB_USERNAME/shelflife-frontend
+    tag: ""
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests: { cpu: 20m, memory: 32Mi }
+    limits: { memory: 128Mi }
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+
+postgres:
+  image: postgres:17-alpine
+  auth:
+    database: shelflife
+    username: shelflife
+    # Demo value only. For anything real, create a Secret yourself and set
+    # existingSecret (keys: username, password) so no password lives in Git.
+    password: change-me-demo-only
+    existingSecret: ""
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: "" # "" = cluster default (kind: standard)
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }
+
+ingress:
+  enabled: true
+  className: traefik
+  # Hostname for the app. *.localtest.me resolves to 127.0.0.1 in public DNS.
+  host: shelflife.localtest.me
+  annotations: {}
+
+podDisruptionBudget:
+  enabled: true
+
+# `helm test` hook pod (templates/tests). Argo CD does not run Helm test hooks,
+# so values-gitops.yaml turns it off.
+tests:
+  enabled: true
+
+metrics:
+  serviceMonitor:
+    # Rendered only if the Prometheus Operator CRD exists in the cluster.
+    enabled: true
+    interval: 15s
+    labels: {}
+  grafanaDashboard:
+    # ConfigMap picked up by the Grafana sidecar of kube-prometheus-stack.
+    enabled: false

@@ -1,0 +1,19 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+{{- $root := . -}}
+{{- range $component := list "backend" "frontend" }}
+---
+# Keep at least one pod of each tier up during node drains/upgrades.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "shelflife.fullname" $root }}-{{ $component }}
+  labels:
+    {{- include "shelflife.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "shelflife.selectorLabels" (dict "ctx" $root "component" $component) | nindent 6 }}
+{{- end }}
+{{- end }}

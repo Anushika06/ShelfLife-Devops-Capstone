@@ -1,0 +1,35 @@
+{{- if .Values.tests.enabled }}
+# `helm test <release>`: checks the backend is ready and the frontend serves the UI.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "shelflife.fullname" . }}-test-connection
+  labels:
+    {{- include "shelflife.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsUser: 65534
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: check
+      image: busybox:1.37
+      command:
+        - sh
+        - -c
+        - |
+          set -e
+          wget -qO- http://{{ include "shelflife.fullname" . }}-backend:8000/ready
+          wget -qO- http://{{ include "shelflife.fullname" . }}-frontend/ | grep -q "<title>ShelfLife</title>"
+          echo "backend ready, frontend serving"
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+{{- end }}
