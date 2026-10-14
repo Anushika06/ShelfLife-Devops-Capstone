@@ -13,8 +13,8 @@ imagePullSecrets: []
 
 backend:
   image:
-    # REPLACE YOUR_GITHUB_USERNAME (lowercase) or override with --set / a values file.
-    repository: ghcr.io/YOUR_GITHUB_USERNAME/shelflife-backend
+    # Override with --set or a values file if needed.
+    repository: ghcr.io/anushika06/shelflife-backend
     # Git commit SHA pushed by CI. Required: the chart refuses to render without it.
     tag: ""
     pullPolicy: IfNotPresent
@@ -34,7 +34,7 @@ backend:
 
 frontend:
   image:
-    repository: ghcr.io/YOUR_GITHUB_USERNAME/shelflife-frontend
+    repository: ghcr.io/anushika06/shelflife-frontend
     tag: ""
     pullPolicy: IfNotPresent
   replicaCount: 2

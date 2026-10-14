@@ -1,0 +1,32 @@
+# Argo CD Application: Argo CD watches this Git repo and keeps namespace
+# "shelflife-gitops" in sync with helm/shelflife + values-gitops.yaml.
+# Apply ONCE from your machine (this file is outside the synced path):
+#   kubectl apply -f argocd/application.yaml
+# Before applying, replace Anushika06 / ShelfLife-Devops-Capstone
+# (scripts/set-github-repo.sh <owner> <repo> does it for you).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shelflife
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Anushika06/ShelfLife-Devops-Capstone.git
+    targetRevision: main
+    path: helm/shelflife
+    helm:
+      releaseName: shelflife
+      valueFiles:
+        - values-gitops.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: shelflife-gitops
+  syncPolicy:
+    automated:
+      prune: true # resources removed from Git are removed from the cluster
+      selfHeal: true # manual kubectl changes are reverted to what Git says
+    syncOptions:
+      - CreateNamespace=true

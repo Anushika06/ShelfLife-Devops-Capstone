@@ -3,13 +3,13 @@
 # successful build on main: that commit is what Argo CD syncs (Git = desired state).
 backend:
   image:
-    repository: ghcr.io/YOUR_GITHUB_USERNAME/shelflife-backend
+    repository: ghcr.io/anushika06/shelflife-backend
     tag: set-by-ci
   config:
     environment: gitops
 frontend:
   image:
-    repository: ghcr.io/YOUR_GITHUB_USERNAME/shelflife-frontend
+    repository: ghcr.io/anushika06/shelflife-frontend
     tag: set-by-ci
 ingress:
   host: shelflife-gitops.localtest.me
