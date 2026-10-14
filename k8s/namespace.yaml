@@ -1,0 +1,21 @@
+# Namespaces used by the project. Apply once per cluster:
+#   kubectl apply -f k8s/namespace.yaml
+# shelflife         -> app installed with `helm upgrade --install` (Helm CLI release)
+# shelflife-gitops  -> same chart, managed by Argo CD from Git (see argocd/)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shelflife
+  labels:
+    app.kubernetes.io/part-of: shelflife
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shelflife-gitops
+  labels:
+    app.kubernetes.io/part-of: shelflife
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted

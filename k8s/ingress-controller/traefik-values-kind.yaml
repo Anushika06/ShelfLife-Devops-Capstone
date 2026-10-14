@@ -1,0 +1,31 @@
+# Traefik Ingress controller on kind (chart traefik/traefik 41.7.1, Traefik v3.7).
+#   helm upgrade --install traefik traefik/traefik --version 41.7.1 \
+#     -n traefik --create-namespace -f k8s/ingress-controller/traefik-values-kind.yaml --wait
+# Why Traefik and not ingress-nginx: the kubernetes/ingress-nginx project was retired
+# and its GitHub repository archived in 2026 (no more security fixes). Our Ingress
+# resource is standard networking.k8s.io/v1, so any controller can serve it.
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
+service:
+  spec:
+    type: NodePort
+ports:
+  web:
+    nodePort: 30080
+  websecure:
+    expose:
+      default: false
+nodeSelector:
+  ingress-ready: "true"
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 256Mi

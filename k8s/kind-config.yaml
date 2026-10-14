@@ -1,0 +1,17 @@
+# Local Kubernetes cluster for the Helm / Ingress / monitoring / Argo CD demo.
+#   kind create cluster --name shelflife --config k8s/kind-config.yaml
+# Traefik (the Ingress controller) listens on NodePort 30080 inside the node;
+# kind maps it to http://localhost:8088 on your machine. Port 8088 is used instead
+# of 80 because 80 is often taken on Windows/macOS laptops.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed
+    labels:
+      ingress-ready: "true"
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8088
+        listenAddress: "127.0.0.1"
+        protocol: TCP

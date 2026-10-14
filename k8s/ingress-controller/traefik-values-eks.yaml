@@ -1,0 +1,27 @@
+# Traefik Ingress controller on EKS.
+# Default: ClusterIP + `kubectl port-forward` -> no AWS load balancer is created,
+# so there is no ELB charge and nothing outside Terraform blocks `terraform destroy`.
+#   helm upgrade --install traefik traefik/traefik --version 41.7.1 \
+#     -n traefik --create-namespace -f k8s/ingress-controller/traefik-values-eks.yaml --wait
+#   kubectl -n traefik port-forward svc/traefik 8088:80
+#   open http://shelflife.localtest.me:8088
+# Optional public URL: install with `--set service.spec.type=LoadBalancer` (creates a
+# Classic/Network Load Balancer billed per hour). You MUST `helm uninstall traefik -n traefik`
+# before `terraform destroy`, or the leftover load balancer blocks VPC deletion.
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
+service:
+  spec:
+    type: ClusterIP
+ports:
+  websecure:
+    expose:
+      default: false
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
