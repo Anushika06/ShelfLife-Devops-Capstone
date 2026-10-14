@@ -1278,31 +1278,24 @@ terraform/terraform.tfvars.example
 
 ---
 
-# 13. Known Issues and Limitations
+# 13. Known Limitations and Production Considerations
 
-* The project uses **Traefik** instead of the archived `kubernetes/ingress-nginx` project.
-* Uvicorn uses the `h11` HTTP implementation because of issues observed with `httptools`.
-* PostgreSQL on EKS is **ephemeral** in the demo configuration.
-* The Terraform configuration does not install the EBS CSI driver.
-* Production deployments should use Amazon RDS or persistent EBS-backed PostgreSQL.
-* In-cluster PostgreSQL is a single replica without backups.
-* Terraform state is stored locally.
-* Production teams should use a remote Terraform backend with locking.
-* Worker nodes use public subnets to avoid NAT Gateway costs.
-* Production infrastructure would normally use private subnets with NAT.
-* The `shelflife_pantry_items` gauge refreshes when `/api/summary` is called.
-* `*.localtest.me` requires DNS resolution to `127.0.0.1`.
-* GitOps promotion commits directly to `main`; protected branches would require a pull request.
-* Windows may not preserve executable permissions on shell scripts.
+- **Database durability:** PostgreSQL is ephemeral in the demo configuration, runs as a single replica, and has no backups. Production deployments should use Amazon RDS or properly configured persistent storage with backups.
+- **Terraform state:** Terraform state is stored locally. Production environments should use a remote backend with state locking.
+- **Networking:** EKS worker nodes use public subnets to avoid NAT Gateway costs. Production architectures would typically place worker nodes in private subnets with appropriate outbound connectivity.
+- **Storage driver:** Terraform does not install the Amazon EBS CSI driver, limiting EBS-backed persistent volume provisioning.
+- **GitOps promotion:** Automated promotion commits directly to `main`. Protected branches should use pull requests and appropriate approval checks.
+- **Metrics freshness:** The `shelflife_pantry_items` gauge refreshes when `/api/summary` is called.
+- **Local DNS:** The `*.localtest.me` hostnames must resolve to `127.0.0.1` for the local ingress URLs to work. If they do not resolve correctly, add the following entries to your hosts file:
 
-If `localtest.me` does not resolve, add:
+  ```text
+  127.0.0.1 shelflife.localtest.me
+  127.0.0.1 shelflife-gitops.localtest.me
+  127.0.0.1 grafana.localtest.me
+  127.0.0.1 prometheus.localtest.me
+  ```
 
-```text
-127.0.0.1 shelflife.localtest.me
-127.0.0.1 shelflife-gitops.localtest.me
-127.0.0.1 grafana.localtest.me
-127.0.0.1 prometheus.localtest.me
-```
+- **Platform compatibility:** Windows may not preserve executable permissions on shell scripts. Run scripts through Bash or WSL if necessary.
 
 ---
 
@@ -1344,22 +1337,6 @@ Contains screenshots from real project runs, including:
 * Argo CD
 * Prometheus
 * Grafana
-
-## Screenshot Checklist
-
-```text
-demo/SCREENSHOT_CHECKLIST.md
-```
-
-Documents what each evidence screenshot demonstrates and how it was captured.
-
-## Video Demo Script
-
-```text
-demo/VIDEO_DEMO_SCRIPT.md
-```
-
-Contains the recommended order and commands for the project walkthrough.
 
 ## Walkthrough Video
 
