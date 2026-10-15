@@ -48,3 +48,9 @@ Thumbs.db
 # --- build artefacts ---
 *.zip
 trivy-*.txt
+
+# --- private planning notes (kept local, never committed) ---
+CAPSTONE_REQUIREMENTS.md
+PROJECT_GUIDE.md
+demo/SCREENSHOT_CHECKLIST.md
+docs/COURSE_REFERENCES.md

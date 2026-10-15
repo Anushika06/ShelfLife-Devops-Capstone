@@ -42,17 +42,36 @@ Example: CVE-2026-97689 is a denial-of-service in urllib3's chunked-response par
 server inside the running container — which the app never does — but removing pip
 removes the vulnerable code entirely instead of accepting the risk.
 
-## Your 2–3 sentence explanation (write after the real CI run)
+## Result in the CI pipeline (graded evidence)
 
-Replace this with what the **pipeline run** shows (the result can differ from the local
-scan because the Trivy vulnerability database changes daily):
+GitHub Actions run #2 on `main`, commit `b728abc3da79747e436f33cf819aa1e97c21b40f`,
+14 October 2026 — [run page](https://github.com/Anushika06/ShelfLife-Devops-Capstone/actions/runs/38564197363).
 
-> _Example if the run is clean:_ Trivy scanned the OS packages and Python/Node
-> dependencies inside both container images built by the pipeline for commit `<sha>`.
-> It found no HIGH or CRITICAL vulnerabilities that have a fix available, so the security
-> gate passed and the images were pushed to GHCR. Unfixed vulnerabilities are excluded and
-> re-checked on every build.
+| Image | Trivy target | HIGH/CRITICAL (fixable) | Gate | Screenshot |
+|---|---|---|---|---|
+| `ghcr.io/anushika06/shelflife-frontend:b728abc…` | Alpine 3.24.2 OS packages | 0 (report summary: Vulnerabilities `0`) | passed, pushed | `demo/evidence/E07-trivy-scan-frontend.png` |
+| `ghcr.io/anushika06/shelflife-backend:b728abc…` | OS packages + Python packages in `/opt/venv` | 0 (step exited 0 with `--exit-code 1`; the Python package rows in the screenshot all show `0`) | passed, pushed | `demo/evidence/E07-trivy-scan-backend.png` |
 
-If a future run fails, open the Trivy step log, note the package, CVE and "Fixed Version",
-then upgrade that package (or the base image tag) and push again. Only as a last resort,
-and with a written justification, add the CVE ID to a `.trivyignore` file.
+## Explanation
+
+Trivy scanned the operating-system packages and the Python dependencies inside both container
+images that the pipeline built for commit `b728abc`, before either image was pushed. It found no
+HIGH or CRITICAL vulnerabilities that have a fixed version available, so the security gate passed
+and both images were published to GHCR with the commit SHA as their tag. Vulnerabilities without a
+fix are excluded by `--ignore-unfixed` and are re-checked on every build, because the Trivy
+database is updated daily.
+
+## If a future run fails
+
+Open the Trivy step log, note the package, CVE and "Fixed Version", then upgrade that package (or
+the base image tag) and push again. Only as a last resort, and with a written justification, add
+the CVE ID to a `.trivyignore` file.
+
+## Configuration scan (local, not part of the pipeline)
+
+`trivy config` (Trivy 0.75.0, 15 October 2026) on the repository reported no HIGH/CRITICAL
+misconfigurations in the Helm chart, Kubernetes manifests or Dockerfiles. It reported five in
+`terraform/main.tf`, all known cost/demo trade-offs documented in the root README: public EKS API
+endpoint open to `0.0.0.0/0` by default (restrict it with `cluster_endpoint_public_access_cidrs`),
+no KMS envelope encryption for Kubernetes secrets, and public IPs on the two public subnets (needed
+because there is no NAT gateway).

@@ -1,62 +1,133 @@
-# ShelfLife
+ShelfLife: DevSecOps Capstone Project
 
-[![CI/CD](https://github.com/Anushika06/ShelfLife-Devops-Capstone/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Anushika06/ShelfLife-Devops-Capstone/actions/workflows/ci-cd.yml)
+CI/CD (https://github.com/Anushika06/ShelfLife-Devops-Capstone/actions/workflows/ci-cd.yml/badge.svg) (https://github.com/Anushika06/ShelfLife-Devops-Capstone/actions/workflows/ci-cd.yml)
 
-A pantry and expiry tracker, delivered through a complete DevSecOps pipeline: from a laptop to a monitored Kubernetes deployment.
+┌───────────────────┬───────────────────────────────────────────────────────────┐
+│                   │                                                           │
+├───────────────────┼───────────────────────────────────────────────────────────┤
+│ Student           │ Anushika Chauhan                                          │
+├───────────────────┼───────────────────────────────────────────────────────────┤
+│ Group             │ Group-A                                                   │
+├───────────────────┼───────────────────────────────────────────────────────────┤
+│ Repository        │ https://github.com/Anushika06/ShelfLife-Devops-Capstone   │
+├───────────────────┼───────────────────────────────────────────────────────────┤
+│ Slide deck        │ demo/presentation.pptx · demo/slides.pdf                  │
+├───────────────────┼───────────────────────────────────────────────────────────┤
+│ Walkthrough video │ demo/shelflife-walkthrough.mp4                            │
+├───────────────────┼───────────────────────────────────────────────────────────┤
+│ Evidence          │ demo/evidence/ (demo/evidence/README.md) (26 screenshots) │
+└───────────────────┴───────────────────────────────────────────────────────────┘
 
-ShelfLife keeps track of what is in a household's **fridge, freezer and pantry**, and answers one question first:
+ShelfLife is a pantry and expiry tracker for a household's fridge, freezer and pantry. It answers one question first:
 
-> **What should we use before it goes off?**
+▎ What should we use before it goes off?
 
-Every item has a storage location, quantity, an optional use-by date and an optional low-stock threshold. The home screen puts everything that is expired or close to its date on a **"Use these first"** shelf. The inventory can be filtered by location, expiry status and search text.
+Each item has a storage location, a quantity, an optional use-by date and an optional low-stock threshold. The home screen places expired and soon-to-expire items on a "Use these first" shelf, and the inventory can be filtered by location, expiry status and search text.
 
-The application is deliberately small. The engineering focus is on taking it through **testing, containerisation, CI/CD, security scanning, infrastructure as code, Kubernetes, GitOps and observability**.
-
----
-
-## Contents
-
-1. [Architecture](#1-architecture)
-2. [Tech Stack](#2-tech-stack)
-3. [The Application](#3-the-application)
-4. [Running Locally](#4-running-locally)
-5. [Testing and Code Quality](#5-testing-and-code-quality)
-6. [CI/CD Pipeline](#6-cicd-pipeline)
-7. [Security](#7-security)
-8. [Infrastructure as Code](#8-infrastructure-as-code-terraform-on-aws)
-9. [Kubernetes and Helm](#9-kubernetes-and-helm)
-10. [GitOps with Argo CD](#10-gitops-with-argo-cd)
-11. [Observability](#11-observability)
-12. [Configuration Reference](#12-configuration-reference)
-13. [Known Issues and Limitations](#13-known-issues-and-limitations)
-14. [Presentation and Evidence](#14-presentation-and-evidence)
+The application is intentionally small. The project's focus is the delivery path around it: automated testing, containerisation, a gated CI/CD pipeline, image security scanning, infrastructure as code on AWS, Kubernetes with Helm, GitOps with Argo CD, and observability with Prometheus and Grafana.
 
 ---
 
-# 1. Architecture
+Contents
 
-## Runtime Architecture
+1. Project Summary and Results (#1-project-summary-and-results)
+2. Architecture (#2-architecture)
+3. Technology Stack (#3-technology-stack)
+4. Application (#4-application)
+5. Running the Application Locally (#5-running-the-application-locally)
+6. Testing and Code Quality (#6-testing-and-code-quality)
+7. CI/CD Pipeline (#7-cicd-pipeline)
+8. Security (DevSecOps) (#8-security-devsecops)
+9. Infrastructure as Code: Terraform on AWS (#9-infrastructure-as-code-terraform-on-aws)
+10. Kubernetes and Helm (#10-kubernetes-and-helm)
+11. GitOps with Argo CD (#11-gitops-with-argo-cd)
+12. Observability: Prometheus and Grafana (#12-observability-prometheus-and-grafana)
+13. Configuration Reference (#13-configuration-reference)
+14. Known Issues and Limitations (#14-known-issues-and-limitations)
+15. Presentation, Video and Evidence (#15-presentation-video-and-evidence)
+16. Rubric Coverage (#16-rubric-coverage)
 
-```mermaid
+---
+
+1. Project Summary and Results
+
+The project was demonstrated in two environments, which are kept separate throughout this document:
+
+┌───────────────┬──────────────────────┬───────────────────────────────────────────┐
+│  Environment  │       Purpose        │           What was demonstrated           │
+├───────────────┼──────────────────────┼───────────────────────────────────────────┤
+│ Local         │ Running the          │ Helm release with 2 backend + 2 frontend  │
+│ Kubernetes    │ application on       │ pods and PostgreSQL, Traefik Ingress,     │
+│ (kind)        │ Kubernetes           │ Argo CD GitOps sync, Prometheus scraping, │
+│               │                      │  Grafana dashboard                        │
+├───────────────┼──────────────────────┼───────────────────────────────────────────┤
+│               │ Provisioning cloud   │ VPC with two public subnets and an EKS    │
+│ AWS           │ infrastructure as    │ cluster with a managed node group (2      │
+│ (Terraform)   │ code                 │ nodes Ready), followed by terraform       │
+│               │                      │ destroy                                   │
+└───────────────┴──────────────────────┴───────────────────────────────────────────┘
+
+The application itself was not deployed to EKS; the EKS cluster demonstrates the Terraform infrastructure only.
+
+┌─────────────────┬─────────────────────────────────────────────────────┬──────────┐
+│      Area       │                   Verified result                   │ Evidence │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ Application     │ React UI, FastAPI and PostgreSQL running with       │ E01, E02 │
+│                 │ Docker Compose; all three containers healthy        │          │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ Testing         │ pytest -v: 17 of 17 tests passed on an isolated     │ E04      │
+│                 │ SQLite database                                     │          │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│                 │ Public repository; 20 commits on main (17 authored  │          │
+│ Git             │ with conventional messages, 3 automated GitOps      │ E03, E05 │
+│                 │ promotions)                                         │          │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ CI/CD           │ GitHub Actions run #2 on main: all 7 jobs succeeded │ E06      │
+│                 │  in 4 m 2 s                                         │          │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ Registry        │ Backend and frontend images in GHCR, tagged with    │ E08      │
+│                 │ the full commit SHA                                 │          │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ Security        │ Trivy gate passed for both images: no fixable       │ E07      │
+│                 │ HIGH/CRITICAL vulnerabilities                       │          │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ Terraform       │ Plan: 16 to add; apply: 16 added in ap-south-1;     │ E09–E12  │
+│                 │ destroy: 16 destroyed; leftover check clean         │          │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ Kubernetes      │ All pods Running, ClusterIP services, Ingress, Helm │ E13–E16  │
+│ (kind)          │  release deployed                                   │          │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ GitOps (kind)   │ Argo CD application Healthy and Synced to main      │ E17      │
+├─────────────────┼─────────────────────────────────────────────────────┼──────────┤
+│ Observability   │ /metrics exposed; Prometheus targets 2/2 UP;        │ E18–E20  │
+│ (kind)          │ Grafana dashboard populated                         │          │
+└─────────────────┴─────────────────────────────────────────────────────┴──────────┘
+
+---
+
+2. Architecture
+
+Runtime Architecture
+
+mermaid
 flowchart LR
     user([Browser]) -->|"/"| ing[Ingress<br/>Traefik]
     ing -->|"/"| fe[frontend<br/>Nginx + React<br/>2 replicas]
     ing -->|"/api"| be[backend<br/>FastAPI<br/>2 replicas]
-    fe -. "/api proxy (Compose / port-forward)" .-> be
+    fe -. "/api proxy (Compose)" .-> be
     be --> db[(PostgreSQL 17<br/>StatefulSet)]
     prom[Prometheus] -->|scrape /metrics| be
     graf[Grafana] --> prom
     argo[Argo CD] -->|sync helm/shelflife| k8s[(shelflife-gitops<br/>namespace)]
-```
 
-The browser only calls relative URLs (`/api/...`), so the same frontend build works in every environment:
+The browser only calls relative URLs (/api/...), so one frontend build works in every environment:
 
-* **Docker Compose:** Nginx proxies `/api` to the backend.
-* **Kubernetes:** Ingress sends `/api` to the backend Service and `/` to the frontend Service.
+- Docker Compose: Nginx in the frontend container proxies /api to the backend.
+- Kubernetes: the Ingress routes /api to the backend Service and / to the frontend Service.
 
-## Delivery Architecture
+Delivery Architecture
 
-```mermaid
+mermaid
 flowchart LR
     dev[git push main] --> gha[GitHub Actions]
     gha --> t[pytest + Ruff<br/>Alembic on PostgreSQL]
@@ -70,1320 +141,872 @@ flowchart LR
     kind --> promote[commit SHA to<br/>values-gitops.yaml]
     promote --> argocd[Argo CD syncs cluster]
     tf[Terraform] --> aws[(AWS VPC + EKS)]
-```
 
-## Repository Layout
+Repository Layout
 
-```text
 .
-├── backend/                  FastAPI service
-│   ├── app/                  main.py, config.py, db.py, models.py,
-│   │                         schemas.py, domain.py, metrics.py,
-│   │                         prestart.py, routers/
-│   ├── alembic/versions/     Database migrations
-│   ├── tests/                pytest suite and conftest.py
-│   ├── Dockerfile            Multi-stage, non-root image
-│   ├── docker-entrypoint.sh  Waits for PostgreSQL, runs migrations
-│   └── requirements*.txt     Runtime and development dependencies
-├── frontend/                 React + Vite UI
+├── backend/                  FastAPI service, Alembic migrations, pytest suite, Dockerfile
+├── frontend/                 React + Vite UI, multi-stage Dockerfile, Nginx config
 ├── docker-compose.yml        PostgreSQL + backend + frontend
-├── .github/workflows/        GitHub Actions CI/CD
-├── terraform/                AWS infrastructure
-├── k8s/                      Kubernetes bootstrap manifests
-├── helm/shelflife/           Helm chart
-├── monitoring/               Prometheus/Grafana configuration
-├── argocd/                   Argo CD Application
-├── scripts/                  Deployment and demo scripts
-├── docs/                     Documentation
-└── demo/                     Presentation and evidence
-```
+├── .github/workflows/        GitHub Actions CI/CD (ci-cd.yml)
+├── terraform/                AWS VPC, subnets, IAM, EKS cluster and node group
+├── k8s/                      Namespaces, kind cluster config, Traefik values
+├── helm/shelflife/           Helm chart for the application
+├── monitoring/               kube-prometheus-stack values (Prometheus, Grafana)
+├── argocd/                   Argo CD Application manifest
+├── scripts/                  Cluster setup, demo data, traffic and AWS cleanup checks
+├── docs/                     Trivy scanning documentation
+└── demo/                     Slide deck, PDF, walkthrough video and evidence screenshots
+
+Folder documentation: backend/ (backend/README.md) · terraform/ (terraform/README.md) · helm/shelflife/ (helm/shelflife/README.md) · argocd/ (argocd/README.md) · monitoring/ (monitoring/README.md) · docs/TRIVY.md · demo/evidence/ (demo/evidence/README.md)
 
 ---
 
-# 2. Tech Stack
+3. Technology Stack
 
-| Layer        | Technology                                 |
-| ------------ | ------------------------------------------ |
-| Backend      | Python 3.13, FastAPI 0.143, Uvicorn 0.54   |
-| Frontend     | React 19, Vite 8, responsive CSS           |
-| Database     | PostgreSQL 17                              |
-| ORM          | SQLAlchemy 2.1                             |
-| Validation   | Pydantic 2.14                              |
-| Migrations   | Alembic 1.20                               |
-| Metrics      | Prometheus + prometheus-client             |
-| Testing      | pytest 9, httpx                            |
-| Code Quality | Ruff                                       |
-| Containers   | Docker, Docker Compose v2                  |
-| CI/CD        | GitHub Actions                             |
-| Registry     | GitHub Container Registry (GHCR)           |
-| Security     | Trivy 0.75                                 |
-| IaC          | Terraform ≥ 1.6                            |
-| Cloud        | AWS VPC + EKS                              |
-| Kubernetes   | kind, Kubernetes 1.36                      |
-| Packaging    | Helm 4                                     |
-| Ingress      | Traefik 3.7                                |
-| GitOps       | Argo CD 3.5                                |
-| Monitoring   | kube-prometheus-stack, Prometheus, Grafana |
+┌──────────────────────┬───────────────────────────────────────────────────────────┐
+│        Layer         │                        Technology                         │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Backend              │ Python 3.13, FastAPI 0.143, Uvicorn 0.54                  │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Frontend             │ React 19, Vite 8, responsive CSS                          │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Database             │ PostgreSQL 17                                             │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ ORM and validation   │ SQLAlchemy 2.1, Pydantic 2.14                             │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Migrations           │ Alembic 1.20                                              │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Testing and quality  │ pytest 9, httpx, Ruff                                     │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Containers           │ Docker, Docker Compose v2                                 │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ CI/CD                │ GitHub Actions                                            │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Registry             │ GitHub Container Registry (GHCR)                          │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Security scanning    │ Trivy 0.75                                                │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Infrastructure as    │ Terraform ≥ 1.6, AWS provider 6.x                         │
+│ code                 │                                                           │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Cloud                │ AWS VPC, EKS 1.36, managed node group                     │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Kubernetes (local)   │ kind, Kubernetes 1.36                                     │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Packaging            │ Helm 4                                                    │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Ingress              │ Traefik 3.7                                               │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ GitOps               │ Argo CD 3.5                                               │
+├──────────────────────┼───────────────────────────────────────────────────────────┤
+│ Monitoring           │ kube-prometheus-stack (Prometheus Operator, Prometheus,   │
+│                      │ Grafana)                                                  │
+└──────────────────────┴───────────────────────────────────────────────────────────┘
 
-All application dependencies, base images, GitHub Actions and Helm chart versions are pinned in the repository.
-
----
-
-# 3. The Application
-
-## Features
-
-* Add, edit and remove pantry items.
-* Storage locations:
-
-  * Fridge
-  * Freezer
-  * Pantry
-* Track quantity and unit.
-* Optional use-by date.
-* Optional low-stock threshold.
-* Notes for each item.
-* **"Use these first"** shelf for expired and soon-to-expire items.
-* **"Use 1"** action to reduce quantity.
-* Quantity never goes below zero.
-* Summary counts for:
-
-  * Total items
-  * Expired
-  * Expiring soon
-  * Running low
-* Location tabs.
-* Search across names and notes.
-* Responsive layout down to phone width.
-* Footer displays the deployed backend version / Git commit SHA.
-
-## REST API
-
-| Method | Endpoint                  | Purpose                             |
-| ------ | ------------------------- | ----------------------------------- |
-| GET    | `/health`                 | Liveness check                      |
-| GET    | `/ready`                  | Database/schema readiness           |
-| GET    | `/metrics`                | Prometheus metrics                  |
-| GET    | `/api/meta`               | Service metadata and allowed values |
-| GET    | `/api/items`              | List and filter items               |
-| GET    | `/api/items/{id}`         | Get one item                        |
-| POST   | `/api/items`              | Create an item                      |
-| PUT    | `/api/items/{id}`         | Replace an item                     |
-| POST   | `/api/items/{id}/consume` | Consume quantity                    |
-| DELETE | `/api/items/{id}`         | Delete an item                      |
-| GET    | `/api/summary`            | Summary statistics                  |
-
-Swagger UI is available at:
-
-```text
-/api/docs
-```
-
-OpenAPI schema:
-
-```text
-/api/openapi.json
-```
-
-## Expiry Rules
-
-* "Today" is evaluated using `APP_TIMEZONE`.
-* Default timezone: `Asia/Kolkata`.
-* An item is considered expiring when its date is within `EXPIRY_WARNING_DAYS`.
-* Default expiry warning window: **3 days**, inclusive.
-* An item is expired once its date has passed.
-* An item is low-stock when a threshold is configured and:
-
-```text
-quantity <= min_quantity
-```
-
-## Database and Migrations
-
-The application uses a single `pantry_items` table managed by Alembic.
-
-Migrations include:
-
-```text
-0001_create_pantry_items
-0002_add_min_quantity
-```
-
-The application does not call `create_all()`.
-
-At container startup:
-
-1. PostgreSQL availability is checked.
-2. Alembic migrations are executed.
-3. Uvicorn starts.
-4. PostgreSQL advisory locking prevents multiple replicas from migrating simultaneously.
+Application dependencies, base images, GitHub Actions and Helm chart versions are pinned in the repository.
 
 ---
 
-# 4. Running Locally
+4. Application
 
-## Prerequisites
+Features
 
-| Tool                           | Required For                   |
-| ------------------------------ | ------------------------------ |
-| Docker Desktop / Docker Engine | Compose, image builds and kind |
-| Docker Compose v2              | Local stack                    |
-| Git                            | Source control                 |
-| Python 3.13+                   | Backend and tests              |
-| Node.js 22.12+                 | Frontend                       |
-| kind ≥ 0.33                    | Local Kubernetes               |
-| kubectl                        | Kubernetes management          |
-| Helm 4                         | Kubernetes deployment          |
-| Terraform ≥ 1.6                | AWS infrastructure             |
-| AWS CLI v2                     | AWS infrastructure             |
+- Add, edit and remove pantry items stored in the fridge, freezer or pantry.
+- Quantity and unit, optional use-by date, optional low-stock threshold and free-text notes.
+- "Use these first" shelf for expired and soon-to-expire items.
+- "Use 1" action that reduces the quantity (never below zero).
+- Summary counts: total items, expired, expiring soon, running low.
+- Location tabs and search across names and notes.
+- Responsive layout down to phone width.
+- Footer showing the deployed backend version (Git commit SHA).
 
-For the full local Kubernetes stack, Docker should have at least **8 GB RAM** available.
+Data entered in the UI flows through the FastAPI backend into PostgreSQL and persists across page refreshes.
 
-### GitHub Repository Setup
+REST API
 
-If you fork the repository, replace the GitHub placeholders:
+┌────────┬─────────────────────────┬─────────────────────────────────────┐
+│ Method │        Endpoint         │               Purpose               │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ GET    │ /health                 │ Liveness check                      │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ GET    │ /ready                  │ Database and schema readiness       │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ GET    │ /metrics                │ Prometheus metrics                  │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ GET    │ /api/meta               │ Service metadata and allowed values │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ GET    │ /api/items              │ List and filter items               │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ GET    │ /api/items/{id}         │ Get one item                        │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ POST   │ /api/items              │ Create an item                      │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ PUT    │ /api/items/{id}         │ Replace an item                     │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ POST   │ /api/items/{id}/consume │ Consume quantity                    │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ DELETE │ /api/items/{id}         │ Delete an item                      │
+├────────┼─────────────────────────┼─────────────────────────────────────┤
+│ GET    │ /api/summary            │ Summary statistics                  │
+└────────┴─────────────────────────┴─────────────────────────────────────┘
 
-```bash
-scripts/set-github-repo.sh <github-owner> <repo-name>
-```
+Interactive API documentation is served at /api/docs (Swagger UI) and /api/openapi.json.
 
-This updates the repository references used by:
+Expiry Rules
 
-* Argo CD
-* Helm values
-* GitOps values
-* CI/CD badge
+- "Today" is evaluated in APP_TIMEZONE (default Asia/Kolkata).
+- An item is expiring when its date falls within EXPIRY_WARNING_DAYS (default 3, inclusive).
+- An item is expired once its date has passed.
+- An item is low-stock when a threshold is set and quantity <= min_quantity.
+
+Database and Migrations
+
+A single pantry_items table is managed entirely by Alembic; the application never calls create_all().
+
+backend/alembic/versions/0001_create_pantry_items.py
+backend/alembic/versions/0002_add_min_quantity.py
+
+At container start-up the backend waits for PostgreSQL, applies alembic upgrade head, and then starts Uvicorn. A PostgreSQL advisory lock ensures that only one replica runs migrations when several start at the same time.
 
 ---
 
-## Option A: Docker Compose
+5. Running the Application Locally
 
-Recommended for local development.
+Prerequisites
 
-```bash
+┌────────────────────────────────────────────────┬─────────────────────────────────┐
+│                      Tool                      │          Required for           │
+├────────────────────────────────────────────────┼─────────────────────────────────┤
+│ Docker Desktop / Docker Engine with Compose v2 │ Local stack, image builds, kind │
+├────────────────────────────────────────────────┼─────────────────────────────────┤
+│ Python 3.13                                    │ Backend and tests               │
+├────────────────────────────────────────────────┼─────────────────────────────────┤
+│ Node.js 22.12+                                 │ Frontend build                  │
+├────────────────────────────────────────────────┼─────────────────────────────────┤
+│ kind ≥ 0.33, kubectl, Helm 4                   │ Local Kubernetes                │
+├────────────────────────────────────────────────┼─────────────────────────────────┤
+│ Terraform ≥ 1.6, AWS CLI v2                    │ AWS infrastructure              │
+└────────────────────────────────────────────────┴─────────────────────────────────┘
+
+The full local Kubernetes stack (application, Traefik, Prometheus, Grafana, Argo CD) needs about 8 GB of RAM available to Docker.
+
+Docker Compose
+
 docker compose up --build
-```
 
-Services:
+┌────────────────────────────────┬────────────────────┐
+│              URL               │      Purpose       │
+├────────────────────────────────┼────────────────────┤
+│ http://localhost:3000          │ ShelfLife UI       │
+├────────────────────────────────┼────────────────────┤
+│ http://localhost:8000/health   │ Backend liveness   │
+├────────────────────────────────┼────────────────────┤
+│ http://localhost:8000/api/docs │ Swagger UI         │
+├────────────────────────────────┼────────────────────┤
+│ http://localhost:8000/metrics  │ Prometheus metrics │
+└────────────────────────────────┴────────────────────┘
 
-| URL                            | Purpose            |
-| ------------------------------ | ------------------ |
-| http://localhost:3000          | ShelfLife UI       |
-| http://localhost:8000/health   | Backend liveness   |
-| http://localhost:8000/api/docs | Swagger UI         |
-| http://localhost:8000/metrics  | Prometheus metrics |
+Compose starts PostgreSQL first, then the backend once the database is healthy, then the frontend once the backend is healthy. PostgreSQL is published on 127.0.0.1:55432. Optional overrides are documented in .env.example.
 
-Compose starts services in order:
+scripts/seed-demo-data.sh      # load sample pantry items
+docker compose down            # stop, keep the database volume
+docker compose down -v         # stop and delete the database volume
 
-```text
-PostgreSQL
-    ↓
-Backend
-    ↓
-Frontend
-```
+Verified result: both images built, shelflife-postgres-1 and shelflife-backend-1 healthy, shelflife-frontend-1 started, and the UI served at http://localhost:3000 (E01, E02).
 
-### Load Demo Data
+Without Containers
 
-```bash
-scripts/seed-demo-data.sh
-```
-
-### Stop the Application
-
-Keep the database volume:
-
-```bash
-docker compose down
-```
-
-Delete the database volume:
-
-```bash
-docker compose down -v
-```
-
-### Environment Configuration
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` as required.
-
-PostgreSQL is published on:
-
-```text
-127.0.0.1:55432
-```
-
-rather than the default `5432`.
-
----
-
-## Option B: Run Backend and Frontend Without Containers
-
-### Start PostgreSQL
-
-```bash
-cp .env.example .env
 docker compose up -d postgres
-```
 
-### Backend
-
-```bash
 cd backend
-
-python -m venv .venv
-source .venv/bin/activate
-```
-
-Windows:
-
-```powershell
-.venv\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
+python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-```
-
-Configure environment:
-
-```bash
 cp .env.example .env
-```
-
-Run migrations:
-
-```bash
 alembic upgrade head
-```
-
-Start FastAPI:
-
-```bash
 uvicorn app.main:app --reload --port 8000
-```
 
-### Frontend
-
-In another terminal:
-
-```bash
-cd frontend
+cd ../frontend
 npm ci
-npm run dev
-```
-
-The frontend will be available at:
-
-```text
-http://localhost:5173
-```
-
-The Vite development server proxies `/api` requests to the backend.
+npm run dev                                           # http://localhost:5173, proxies /api to the backend
 
 ---
 
-# 5. Testing and Code Quality
+6. Testing and Code Quality
 
-From the backend directory:
-
-```bash
 cd backend
 pip install -r requirements-dev.txt
-```
-
-Run Ruff:
-
-```bash
 ruff check .
-```
-
-Check formatting:
-
-```bash
 ruff format --check .
-```
-
-Run tests:
-
-```bash
 pytest -v
-```
 
-## Test Isolation
+Test Isolation
 
-Tests use an isolated SQLite database.
+backend/tests/conftest.py points the application at a temporary SQLite database before the app is imported, asserts that SQLite is in use, and recreates the tables around every test. The tests never touch the PostgreSQL development or production database. Configuration is in backend/pytest.ini.
 
-The test configuration:
+Test Suite
 
-* Creates a temporary SQLite database.
-* Verifies that the application is using SQLite.
-* Recreates tables around every test.
-* Never touches the PostgreSQL development database.
+17 tests in four files:
 
-## Test Coverage
+┌────────────────────┬──────────────────────────────────────────────────────────────┐
+│        File        │                            Covers                            │
+├────────────────────┼──────────────────────────────────────────────────────────────┤
+│                    │ Create (201 and computed fields), validation errors, sorting │
+│ test_items.py      │  by expiry, all filters, get by ID and 404, PUT replacement, │
+│                    │  consume with zero floor, delete                             │
+├────────────────────┼──────────────────────────────────────────────────────────────┤
+│ test_summary.py    │ Summary counts, empty pantry, expiry status boundaries,      │
+│                    │ low-stock rule                                               │
+├────────────────────┼──────────────────────────────────────────────────────────────┤
+│ test_system.py     │ /health, /ready, /api/meta, /metrics Prometheus format       │
+├────────────────────┼──────────────────────────────────────────────────────────────┤
+│ test_migrations.py │ Alembic upgrade and downgrade                                │
+└────────────────────┴──────────────────────────────────────────────────────────────┘
 
-The test suite contains **17 tests** covering:
+In CI, Alembic is additionally run upgrade head → downgrade base → upgrade head against a real PostgreSQL 17 service container.
 
-* `/health`
-* `/ready`
-* `/api/meta`
-* `/metrics`
-* Item creation
-* Validation errors
-* Whitespace trimming
-* Sorting
-* All item filters
-* Get-by-ID
-* 404 handling
-* PUT replacement
-* Item consumption
-* Quantity zero floor
-* Invalid consumption amounts
-* Delete
-* Summary counts
-* Expiry boundaries
-* Low-stock boundaries
-* Alembic migration upgrade/downgrade
-
-CI additionally tests:
-
-```text
-upgrade head
-    ↓
-downgrade base
-    ↓
-upgrade head
-```
-
-against PostgreSQL 17.
+Verified result: pytest -v collected 17 items, 17 passed (E04).
 
 ---
 
-# 6. CI/CD Pipeline
+7. CI/CD Pipeline
 
-Workflow:
+Workflow file: .github/workflows/ci-cd.yml
 
-```text
-.github/workflows/ci-cd.yml
-```
+Triggers: push to main, pull requests to main, and manual dispatch.
 
-Triggers:
+#: 1
+Job: Backend: lint, pytest, migrations
+What it does: Ruff lint and format check, pytest -v, Alembic up/down/up on PostgreSQL 17
+Gate: Any failure stops the pipeline
+────────────────────────────────────────
+#: 2
+Job: Frontend: npm build
+What it does: npm ci, npm run build; dist/ uploaded as an artifact
+Gate: Build failure stops the pipeline
+────────────────────────────────────────
+#: 3
+Job: Terraform validate + Helm lint
+What it does: terraform fmt -check, init -backend=false, validate; helm lint and helm
+template for every values file
+Gate: Validation failure stops the pipeline
+────────────────────────────────────────
+#: 4–5
+Job: Image backend / Image frontend
+What it does: Build each image tagged with the commit SHA, scan with Trivy, push to GHCR
+Gate: Fixable HIGH/CRITICAL CVE fails the job before the push
+────────────────────────────────────────
+#: 6
+Job: Deploy to kind with Helm + smoke test
+What it does: Temporary kind cluster, Traefik, helm upgrade --install, helm test,
+create/read/delete through the Ingress
+Gate: Deployment or smoke-test failure stops promotion
+────────────────────────────────────────
+#: 7
+Job: GitOps: promote SHA for Argo CD
+What it does: Writes the new image SHA into helm/shelflife/values-gitops.yaml and
+commits it
+Gate: Runs only after a successful deployment
 
-* Push to `main`
-* Pull requests to `main`
-* Manual dispatch
+Jobs 4–7 run their push, deploy and promote steps only for pushes to main; pull requests run the test, build and scan stages.
 
-## Pipeline Stages
+Design Decisions
 
-### 1. Backend Tests
+- Immutable images: images are tagged only with the full Git commit SHA, never latest. The Helm chart refuses to render without an explicit tag.
+- No stored registry credentials: GHCR authentication uses the workflow's built-in GITHUB_TOKEN.
+- Ordered promotions: runs on main are queued so GitOps promotions happen in commit order; superseded pull-request runs are cancelled.
+- No CI loop: promotion commits are marked [skip ci] and are made with GITHUB_TOKEN, which does not trigger another workflow.
 
-Runs:
-
-```text
-Ruff lint
-Ruff format check
-pytest
-Alembic upgrade/down/up
-```
-
-Any failure stops the pipeline.
-
-### 2. Frontend Build
-
-```bash
-npm ci
-npm run build
-```
-
-The generated `dist/` directory is uploaded as an artifact.
-
-### 3. Infrastructure Validation
-
-Terraform:
-
-```bash
-terraform fmt -check
-terraform init -backend=false
-terraform validate
-```
-
-Helm:
-
-```bash
-helm lint
-helm template
-```
-
-Every values file is validated.
-
-### 4. Container Images
-
-Two images are built:
-
-```text
-shelflife-backend
-shelflife-frontend
-```
-
-Images are tagged with the full Git commit SHA:
-
-```text
-:<git-sha>
-```
-
-Images are pushed to GHCR only for successful `main` builds.
-
-### 5. Trivy Security Gate
-
-Each image is scanned before publishing.
-
-Fixable `HIGH` or `CRITICAL` vulnerabilities fail the pipeline.
-
-### 6. kind Deployment
-
-CI creates a temporary kind cluster and:
-
-1. Installs Traefik.
-2. Deploys the Helm chart.
-3. Runs Helm tests.
-4. Performs create/read/delete smoke tests through Ingress.
-
-### 7. GitOps Promotion
-
-After successful deployment:
-
-```text
-values-gitops.yaml
-```
-
-is updated with the new image SHA.
-
-Argo CD then detects the Git change and deploys the new version.
-
-## CI/CD Design Principles
-
-### Immutable Images
-
-Images use commit SHA tags instead of `latest`.
-
-The Helm chart requires an explicit image tag.
-
-### No Stored Registry Credentials
-
-GHCR authentication uses GitHub's built-in `GITHUB_TOKEN`.
-
-### Ordered Promotions
-
-Main branch runs are queued so GitOps promotions happen in commit order.
-
-Pull-request runs cancel superseded runs.
-
-### No CI Loop
-
-Promotion commits use:
-
-```text
-[skip ci]
-```
-
-and GitHub token commits do not trigger another workflow.
-
-After a successful promotion:
-
-```bash
-git pull --rebase
-```
-
-before the next push.
+Verified result: run #2 on main, commit b728abc (https://github.com/Anushika06/ShelfLife-Devops-Capstone/actions/runs/38564197363) completed all 7 jobs successfully in 4 m 2 s with 6 artifacts (E06). Both images were published to GHCR as ghcr.io/anushika06/shelflife-backend:<sha> and ghcr.io/anushika06/shelflife-frontend:<sha> (E08).
 
 ---
 
-# 7. Security
+8. Security (DevSecOps)
 
-## Trivy Image Scanning
+Trivy Image Scanning
 
-Images are scanned with:
+Each image is scanned in CI before it is pushed:
 
-```bash
-trivy image \
-  --severity HIGH,CRITICAL \
-  --ignore-unfixed \
-  --exit-code 1 \
-  <image>:<git-sha>
-```
+trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 <image>:<git-sha>
 
-The scan:
+- Only HIGH and CRITICAL findings are considered.
+- Vulnerabilities without an available fix are excluded and re-checked on every build.
+- Any remaining finding fails the job, so a vulnerable image is never pushed.
+- The scan report is added to the workflow summary and uploaded as an artifact.
 
-* Reports HIGH and CRITICAL vulnerabilities.
-* Ignores vulnerabilities without available fixes.
-* Fails the build when fixable vulnerabilities remain.
-* Runs before the image is pushed.
+Result (run #2, commit b728abc): Trivy scanned the operating-system packages and the Python dependencies inside both images. The frontend image (Alpine 3.24.2) reported 0 vulnerabilities, and the backend scan step passed with --exit-code 1, with every Python package in the virtual environment reported as 0. No fixable HIGH or CRITICAL vulnerability was found, so the gate passed and both images were published (E07).
 
-The scan output is also included in the workflow summary and uploaded as an artifact.
+During development, a local scan of the backend image found four HIGH findings in libraries vendored inside pip (urllib3, msgpack and setuptools metadata). The application never uses pip at runtime, so the Dockerfile removes pip and ensurepip from the runtime stage; the rebuilt image reported no HIGH/CRITICAL findings. Full details: docs/TRIVY.md.
 
-## Container Hardening
+Container Hardening
 
-### Backend
+┌──────────┬────────────────────────────────────────────────────────────────────────┐
+│  Image   │                               Hardening                                │
+├──────────┼────────────────────────────────────────────────────────────────────────┤
+│ Backend  │ Multi-stage build on python:3.13-slim; runs as UID 10001; pip removed  │
+│          │ from the runtime image                                                 │
+├──────────┼────────────────────────────────────────────────────────────────────────┤
+│ Frontend │ Multi-stage build: Node build stage, then nginx-unprivileged runtime   │
+│          │ as UID 101 on port 8080                                                │
+└──────────┴────────────────────────────────────────────────────────────────────────┘
 
-Runs as:
+Kubernetes Security
 
-```text
-UID 10001
-```
+- Application containers run as non-root with a read-only root filesystem, dropped Linux capabilities, no privilege escalation and the RuntimeDefault seccomp profile.
+- Namespaces enforce the baseline Pod Security Standard and warn on restricted.
 
-### Frontend
+Secrets Management
 
-Uses:
-
-```text
-nginx-unprivileged
-UID 101
-port 8080
-```
-
-## Kubernetes Security
-
-Pods use:
-
-* `runAsNonRoot`
-* Read-only root filesystem
-* Dropped Linux capabilities
-* No privilege escalation
-* `RuntimeDefault` seccomp profile
-
-Namespaces enforce the baseline Pod Security Standard and warn on restricted settings.
-
-## Secrets
-
-Sensitive values are not committed to Git.
-
-Ignored files include:
-
-```text
-.env
-terraform.tfvars
-terraform.tfstate
-kubeconfig
-```
-
-Only example templates are committed.
-
-Database passwords are provided through Kubernetes Secrets.
-
-Grafana and Argo CD credentials are also stored in Kubernetes Secrets.
-
-> The Helm default database password `change-me-demo-only` is for demonstrations only. Production deployments should use an existing Kubernetes Secret.
+- No credentials are stored in the repository. .env, terraform.tfvars, Terraform state, plan files and kubeconfig files are excluded by .gitignore; only example templates are committed.
+- AWS credentials are read by Terraform from the standard AWS CLI credential chain, never from files in the repository.
+- The database password reaches the backend through a Kubernetes Secret; Grafana and Argo CD admin credentials are also held in Kubernetes Secrets.
+- The values change-me-local-only (.env.example), change-me-demo-only (Helm values.yaml) and ci-only-password (CI service container) are non-secret placeholders for local, demo and CI use. The chart supports postgres.auth.existingSecret for real deployments.
+- The Git history was scanned with gitleaks (all 20 commits) and searched for access keys, tokens, private keys, .env files and Terraform state: no secrets were found.
 
 ---
 
-# 8. Infrastructure as Code — Terraform on AWS
+9. Infrastructure as Code: Terraform on AWS
 
-Terraform provisions AWS infrastructure in `ap-south-1` by default.
+Terraform in terraform/ (terraform/README.md) provisions the AWS infrastructure in ap-south-1 (Mumbai).
 
-## Resources
+┌────────────┬─────────────────────────────────────────────────────────────────────┐
+│  Resource  │                            Configuration                            │
+├────────────┼─────────────────────────────────────────────────────────────────────┤
+│ VPC        │ 10.42.0.0/16, DNS support and hostnames, internet gateway, public   │
+│            │ route table                                                         │
+├────────────┼─────────────────────────────────────────────────────────────────────┤
+│ Subnets    │ Two public subnets in two availability zones, tagged for EKS load   │
+│            │ balancers                                                           │
+├────────────┼─────────────────────────────────────────────────────────────────────┤
+│ IAM        │ Roles and policy attachments for the EKS control plane and worker   │
+│            │ nodes                                                               │
+├────────────┼─────────────────────────────────────────────────────────────────────┤
+│ EKS        │ shelflife-eks, Kubernetes 1.36, standard support upgrade policy,    │
+│ cluster    │ public and private endpoint, API access entries                     │
+├────────────┼─────────────────────────────────────────────────────────────────────┤
+│ Node group │ shelflife-nodes, Amazon Linux 2023, 20 GiB disk, on-demand; default │
+│            │  2 × t3.medium (min 1, max 3)                                       │
+├────────────┼─────────────────────────────────────────────────────────────────────┤
+│ Budget     │ Optional AWS Budgets e-mail alert when budget_alert_email is set    │
+│ alert      │                                                                     │
+└────────────┴─────────────────────────────────────────────────────────────────────┘
 
-### VPC
+terraform.tfvars.example documents every input and contains no credentials.
 
-```text
-CIDR: 10.42.0.0/16
-```
+Cost-Driven Choices
 
-Includes:
+- No NAT gateway: worker nodes run in public subnets.
+- No CloudWatch control-plane logging.
+- Local state instead of a remote backend.
+- Kubernetes 1.36 in EKS standard support (older versions incur extended-support fees).
+- Infrastructure destroyed immediately after the evidence was captured.
 
-* DNS support
-* DNS hostnames
-* Internet Gateway
-* Public route table
+Commands
 
-### Subnets
-
-Two public subnets across two Availability Zones.
-
-### EKS
-
-* Kubernetes 1.36
-* Public + private endpoint
-* API access entries
-* Creator receives admin access
-* Standard upgrade policy
-
-### Node Group
-
-Default:
-
-```text
-2 × t3.medium
-```
-
-Configuration:
-
-```text
-Minimum: 1
-Maximum: 3
-OS: Amazon Linux 2023
-Disk: 20 GiB
-Capacity: ON_DEMAND
-```
-
-SPOT capacity is optional.
-
-### Budget Alert
-
-An AWS Budget email alert can be created by setting:
-
-```text
-budget_alert_email
-```
-
-## Cost-Driven Choices
-
-The project deliberately avoids:
-
-* NAT Gateway
-* CloudWatch control-plane logging
-* Remote Terraform backend
-
-Worker nodes run in public subnets to reduce infrastructure cost.
-
-> The EKS control-plane fee continues while the cluster exists. Review current AWS pricing before applying the Terraform configuration.
-
-## Deploy
-
-```bash
 cd terraform
-
 cp terraform.tfvars.example terraform.tfvars
-```
-
-Confirm the AWS account:
-
-```bash
-aws sts get-caller-identity
-```
-
-Initialize:
-
-```bash
 terraform init
-```
-
-Create a plan:
-
-```bash
 terraform plan -out tfplan
-```
-
-Apply:
-
-```bash
 terraform apply tfplan
-```
-
-Configure kubectl:
-
-```bash
-aws eks update-kubeconfig \
-  --region ap-south-1 \
-  --name shelflife-eks
-```
-
-Verify:
-
-```bash
+aws eks update-kubeconfig --region ap-south-1 --name shelflife-eks
 kubectl get nodes
-```
 
-## Important Terraform Settings
-
-Review:
-
-```text
-kubernetes_version
-cluster_endpoint_public_access_cidrs
-node_capacity_type
-node_desired_size
-budget_alert_email
-```
-
-Restrict the Kubernetes API CIDR to your own IP where possible:
-
-```text
-x.x.x.x/32
-```
-
-## Teardown
-
-Remove Kubernetes resources that may create AWS resources first:
-
-```bash
-helm uninstall shelflife -n shelflife || true
-helm uninstall traefik -n traefik || true
-```
-
-Check for LoadBalancer services:
-
-```bash
-kubectl get svc -A | grep LoadBalancer
-```
-
-Then:
-
-```bash
-cd terraform
 terraform destroy
-```
+../scripts/aws-check-leftovers.sh ap-south-1      # read-only check for remaining resources
 
-Finally:
+CI validates the configuration on every push (terraform fmt -check, terraform init -backend=false, terraform validate) without AWS credentials.
 
-```bash
-cd ..
-scripts/aws-check-leftovers.sh ap-south-1
-```
+Verified Result
 
-The leftover-check script performs read-only checks for:
+┌────────────────────────────────┬───────────────────────────────────────┬──────────┐
+│              Step              │                Result                 │ Evidence │
+├────────────────────────────────┼───────────────────────────────────────┼──────────┤
+│ terraform plan                 │ Plan: 16 to add, 0 to change, 0 to    │ E09      │
+│                                │ destroy                               │          │
+├────────────────────────────────┼───────────────────────────────────────┼──────────┤
+│ terraform apply                │ Apply complete: 16 added; outputs for │ E09      │
+│                                │  cluster, VPC and subnets             │          │
+├────────────────────────────────┼───────────────────────────────────────┼──────────┤
+│ AWS Console: VPC               │ shelflife-vpc, 10.42.0.0/16,          │ E10      │
+│                                │ Available                             │          │
+├────────────────────────────────┼───────────────────────────────────────┼──────────┤
+│                                │ shelflife-public-ap-south-1a          │          │
+│ AWS Console: subnets           │ (10.42.0.0/20) and                    │ E10      │
+│                                │ shelflife-public-ap-south-1b          │          │
+│                                │ (10.42.16.0/20)                       │          │
+├────────────────────────────────┼───────────────────────────────────────┼──────────┤
+│ AWS Console: EKS               │ Node group shelflife-nodes Active,    │ E11      │
+│                                │ Kubernetes 1.36, desired size 2       │          │
+├────────────────────────────────┼───────────────────────────────────────┼──────────┤
+│ kubectl get nodes              │ 2 nodes Ready (v1.36.4-eks)           │ E11      │
+├────────────────────────────────┼───────────────────────────────────────┼──────────┤
+│ terraform destroy              │ Destroy complete: 16 destroyed        │ E12      │
+├────────────────────────────────┼───────────────────────────────────────┼──────────┤
+│                                │ No EKS clusters, project VPCs, EC2    │          │
+│ scripts/aws-check-leftovers.sh │ instances, load balancers, unattached │ E12      │
+│                                │  volumes, Elastic IPs or NAT gateways │          │
+│                                │  left                                 │          │
+└────────────────────────────────┴───────────────────────────────────────┴──────────┘
 
-* EKS clusters
-* Project-tagged VPCs
-* EKS-tagged EC2 instances
-* Load balancers
-* Unattached EBS volumes
-* Elastic IPs
-* NAT gateways
+For this run the node instance type was set to t3.small in the local, git-ignored terraform.tfvars; the committed default is t3.medium.
 
 ---
 
-# 9. Kubernetes and Helm
+10. Kubernetes and Helm
 
-## Local kind Cluster
+The application runs on a local kind cluster using the Helm chart in helm/shelflife/ (helm/shelflife/README.md). The same chart is validated in CI and deployed to a temporary kind cluster in every main pipeline run.
 
-Build and load local images:
+Cluster Bootstrap
 
-```bash
-scripts/kind-up.sh --local
-```
+- k8s/namespace.yaml creates the shelflife (Helm CLI release) and shelflife-gitops (Argo CD release) namespaces.
+- k8s/kind-config.yaml maps host port 8088 to the Traefik Ingress controller.
+- k8s/ingress-controller/ holds the Traefik values for kind and EKS.
 
-Or use images already published to GHCR:
+Helm Chart
 
-```bash
-scripts/kind-up.sh --ghcr <github-owner> <git-sha>
-```
+┌──────────────────┬───────────────────────────────────────────────────────────────┐
+│     Resource     │                            Details                            │
+├──────────────────┼───────────────────────────────────────────────────────────────┤
+│ Backend          │ 2 replicas; startup and liveness probe /health, readiness     │
+│ Deployment       │ probe /ready                                                  │
+├──────────────────┼───────────────────────────────────────────────────────────────┤
+│ Frontend         │ 2 replicas; probe /healthz                                    │
+│ Deployment       │                                                               │
+├──────────────────┼───────────────────────────────────────────────────────────────┤
+│ PostgreSQL       │ 1 replica; 1 GiB PersistentVolumeClaim on kind                │
+│ StatefulSet      │                                                               │
+├──────────────────┼───────────────────────────────────────────────────────────────┤
+│ Services         │ ClusterIP for backend (8000), frontend (80) and PostgreSQL    │
+│                  │ (5432)                                                        │
+├──────────────────┼───────────────────────────────────────────────────────────────┤
+│ Ingress          │ Traefik; /api → backend, / → frontend                         │
+├──────────────────┼───────────────────────────────────────────────────────────────┤
+│ Other            │ PodDisruptionBudgets, optional HPAs, ServiceMonitor, Grafana  │
+│                  │ dashboard ConfigMap, helm test pod                            │
+└──────────────────┴───────────────────────────────────────────────────────────────┘
 
-The script:
+┌──────────────────────────┬────────────────────────────────────────────────┐
+│       Values file        │                    Purpose                     │
+├──────────────────────────┼────────────────────────────────────────────────┤
+│ values.yaml              │ Defaults                                       │
+├──────────────────────────┼────────────────────────────────────────────────┤
+│ values-kind.yaml         │ Local kind deployment (shelflife.localtest.me) │
+├──────────────────────────┼────────────────────────────────────────────────┤
+│ values-local-images.yaml │ Locally built images loaded into kind          │
+├──────────────────────────┼────────────────────────────────────────────────┤
+│ values-eks.yaml          │ EKS deployment settings                        │
+├──────────────────────────┼────────────────────────────────────────────────┤
+│ values-gitops.yaml       │ Argo CD release; image SHA updated by CI       │
+└──────────────────────────┴────────────────────────────────────────────────┘
 
-1. Creates a kind cluster.
-2. Maps host port `8088` to the Ingress controller.
-3. Installs Traefik.
-4. Installs kube-prometheus-stack.
-5. Creates namespaces.
-6. Installs the ShelfLife Helm chart.
-7. Runs Helm tests.
-8. Prints access URLs.
+Commands
 
-Remove the cluster:
+The whole local stack (kind cluster, Traefik, kube-prometheus-stack, namespaces, ShelfLife release and Helm tests) is created by:
 
-```bash
-scripts/kind-down.sh
-```
+scripts/kind-up.sh --ghcr <github-owner> <git-sha>     # or: scripts/kind-up.sh --local
+scripts/kind-down.sh                                    # remove the cluster
 
-## Manual Installation
+Equivalent manual installation of the application:
 
-Create the cluster:
-
-```bash
-kind create cluster \
-  --name shelflife \
-  --config k8s/kind-config.yaml
-```
-
-Add Helm repositories:
-
-```bash
-helm repo add traefik https://traefik.github.io/charts
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-```
-
-Install Traefik:
-
-```bash
-helm upgrade --install traefik traefik/traefik \
-  --version 41.7.1 \
-  -n traefik \
-  --create-namespace \
-  -f k8s/ingress-controller/traefik-values-kind.yaml \
-  --wait
-```
-
-Install monitoring:
-
-```bash
-kubectl create namespace monitoring
-
-kubectl -n monitoring create secret generic grafana-admin \
-  --from-literal=admin-user=admin \
-  --from-literal=admin-password='<choose-a-password>'
-```
-
-```bash
-helm upgrade --install monitoring \
-  prometheus-community/kube-prometheus-stack \
-  --version 92.3.1 \
-  -n monitoring \
-  -f monitoring/prometheus-values.yaml \
-  -f monitoring/grafana-values.yaml \
-  --wait \
-  --timeout 10m
-```
-
-Install ShelfLife:
-
-```bash
 kubectl apply -f k8s/namespace.yaml
-
-helm upgrade --install shelflife ./helm/shelflife \
-  -n shelflife \
+helm upgrade --install shelflife ./helm/shelflife -n shelflife \
   -f helm/shelflife/values-kind.yaml \
-  --set backend.image.repository=ghcr.io/<owner>/shelflife-backend \
+  --set backend.image.repository=ghcr.io/anushika06/shelflife-backend \
   --set backend.image.tag=<git-sha> \
-  --set frontend.image.repository=ghcr.io/<owner>/shelflife-frontend \
+  --set frontend.image.repository=ghcr.io/anushika06/shelflife-frontend \
   --set frontend.image.tag=<git-sha> \
   --wait
-```
-
-Run Helm tests:
-
-```bash
 helm test shelflife -n shelflife
-```
-
-Check resources:
-
-```bash
 kubectl get pods,svc,ingress -n shelflife
 helm list -n shelflife
-```
 
-Application URL:
+Application URL on kind: http://shelflife.localtest.me:8088
 
-```text
-http://shelflife.localtest.me:8088
-```
+Verified Result (kind)
 
-## Helm Chart Resources
-
-The chart deploys:
-
-* Backend Deployment — 2 replicas
-* Frontend Deployment — 2 replicas
-* PostgreSQL StatefulSet
-* Backend Service
-* Frontend Service
-* PostgreSQL Service
-* Traefik Ingress
-* PodDisruptionBudgets
-* Optional HPAs
-* ServiceMonitor
-* Grafana dashboard
-* Helm test Pod
-
-Backend probes:
-
-```text
-startup: /health
-liveness: /health
-readiness: /ready
-```
-
-Frontend probe:
-
-```text
-/healthz
-```
-
-The chart requires explicit image tags and will not render with an implicit `latest`.
-
-## Helm Values Files
-
-| File                       | Purpose                    |
-| -------------------------- | -------------------------- |
-| `values.yaml`              | Default configuration      |
-| `values-kind.yaml`         | Local kind deployment      |
-| `values-local-images.yaml` | Locally loaded kind images |
-| `values-eks.yaml`          | EKS deployment             |
-| `values-gitops.yaml`       | Argo CD deployment         |
+┌────────────────────┬──────────────────────────────────────────────────┬──────────┐
+│       Check        │                      Result                      │ Evidence │
+├────────────────────┼──────────────────────────────────────────────────┼──────────┤
+│ kubectl get pods   │ 2 backend, 2 frontend and 1 PostgreSQL pod, all  │ E13      │
+│ -n shelflife       │ Running and 1/1                                  │          │
+├────────────────────┼──────────────────────────────────────────────────┼──────────┤
+│ kubectl get svc -n │ shelflife-backend, shelflife-frontend,           │ E13, E14 │
+│  shelflife         │ shelflife-postgres, all ClusterIP                │          │
+├────────────────────┼──────────────────────────────────────────────────┼──────────┤
+│ kubectl get        │                                                  │          │
+│ ingress -n         │ Class traefik, host shelflife.localtest.me       │ E13      │
+│ shelflife          │                                                  │          │
+├────────────────────┼──────────────────────────────────────────────────┼──────────┤
+│ helm list -n       │ Release shelflife, revision 1, deployed, chart   │ E15      │
+│ shelflife          │ shelflife-0.1.0                                  │          │
+├────────────────────┼──────────────────────────────────────────────────┼──────────┤
+│ Browser through    │ UI served at http://shelflife.localtest.me:8088  │ E16      │
+│ the Ingress        │                                                  │          │
+└────────────────────┴──────────────────────────────────────────────────┴──────────┘
 
 ---
 
-# 10. GitOps with Argo CD
+11. GitOps with Argo CD
 
-Install Argo CD:
+argocd/application.yaml (argocd/README.md) defines the Argo CD Application shelflife:
 
-```bash
-scripts/argocd-up.sh
-```
+- Source: this repository, branch main, path helm/shelflife, values file values-gitops.yaml.
+- Destination: namespace shelflife-gitops.
+- Sync policy: automated, with prune and selfHeal, so manual changes in the cluster are reverted to the state declared in Git.
 
-Check applications:
+GitOps Flow
 
-```bash
+git push to main
+   → GitHub Actions: tests, build, Trivy scan, push to GHCR, kind deployment
+   → gitops-promote job commits the new image SHA to helm/shelflife/values-gitops.yaml
+   → Argo CD detects the new commit and rolls out the new images in shelflife-gitops
+
+The Helm CLI release (shelflife namespace) and the Argo CD release (shelflife-gitops namespace) are separate.
+
+Commands
+
+scripts/argocd-up.sh                                       # installs Argo CD v3.5.5 and applies the Application
 kubectl -n argocd get applications
-```
+kubectl -n argocd port-forward svc/argocd-server 8443:443  # UI at https://localhost:8443
 
-Port-forward the Argo CD server:
+GitOps release URL on kind: http://shelflife-gitops.localtest.me:8088
 
-```bash
-kubectl -n argocd port-forward svc/argocd-server 8443:443
-```
-
-Access:
-
-```text
-https://localhost:8443
-```
-
-Retrieve the initial password:
-
-```bash
-kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath='{.data.password}' | base64 -d
-echo
-```
-
-## GitOps Flow
-
-```text
-1. Developer pushes to main
-          ↓
-2. GitHub Actions runs
-          ↓
-3. Images are built and scanned
-          ↓
-4. kind deployment succeeds
-          ↓
-5. values-gitops.yaml receives the new SHA
-          ↓
-6. Argo CD detects the Git change
-          ↓
-7. Argo CD rolls out the new version
-          ↓
-8. UI footer shows the new version
-```
-
-Argo CD has automated:
-
-* Sync
-* Pruning
-* Self-healing
-
-A manual Kubernetes change is reverted to the state declared in Git.
-
-## Prerequisites
-
-Before running Argo CD:
-
-* `argocd/application.yaml` must contain the repository URL.
-* At least one green CI run must have populated `values-gitops.yaml`.
-* GHCR packages must be public or accessible using an image pull secret.
-
-Application URL:
-
-```text
-http://shelflife-gitops.localtest.me:8088
-```
-
-The Helm CLI release and Argo CD release are deliberately kept separate.
+Verified result (kind): Argo CD v3.5.5 shows the shelflife application Healthy and Synced to main at commit 18a0823 (the CI promotion commit for b728abc), with automated sync enabled and a resource tree of PostgreSQL, two backend pods, two frontend pods, their services and the Ingress (E17).
 
 ---
 
-# 11. Observability
+12. Observability: Prometheus and Grafana
 
-## Metrics
+Application Metrics
 
-The backend exposes:
+The backend exposes Prometheus metrics at /metrics:
 
-```text
-/metrics
-```
+┌────────────────────────────────┬───────────┬──────────────────────────────────────┐
+│             Metric             │   Type    │                Labels                │
+├────────────────────────────────┼───────────┼──────────────────────────────────────┤
+│ http_requests_total            │ Counter   │ handler, method, status              │
+├────────────────────────────────┼───────────┼──────────────────────────────────────┤
+│ http_request_duration_seconds  │ Histogram │ handler, method                      │
+├────────────────────────────────┼───────────┼──────────────────────────────────────┤
+│ shelflife_items_created_total  │ Counter   │ location                             │
+├────────────────────────────────┼───────────┼──────────────────────────────────────┤
+│ shelflife_items_consumed_total │ Counter   │ —                                    │
+├────────────────────────────────┼───────────┼──────────────────────────────────────┤
+│ shelflife_items_deleted_total  │ Counter   │ —                                    │
+├────────────────────────────────┼───────────┼──────────────────────────────────────┤
+│ shelflife_pantry_items         │ Gauge     │ status (expired, expiring, fresh,    │
+│                                │           │ no-date, low-stock)                  │
+└────────────────────────────────┴───────────┴──────────────────────────────────────┘
 
-Metrics include:
+Probe and metrics endpoints are excluded from the HTTP metrics so that dashboards reflect real API traffic.
 
-| Metric                           | Type      | Labels                  |
-| -------------------------------- | --------- | ----------------------- |
-| `http_requests_total`            | Counter   | handler, method, status |
-| `http_request_duration_seconds`  | Histogram | handler, method         |
-| `shelflife_items_created_total`  | Counter   | location                |
-| `shelflife_items_consumed_total` | Counter   | —                       |
-| `shelflife_items_deleted_total`  | Counter   | —                       |
-| `shelflife_pantry_items`         | Gauge     | status                  |
+Monitoring Stack
 
-The pantry status gauge tracks:
+monitoring/ (monitoring/README.md) contains the values for kube-prometheus-stack 92.3.1:
 
-```text
-expired
-expiring
-fresh
-no-date
-low-stock
-```
+- Prometheus selects ServiceMonitors in all namespaces, keeps 2 days of data, and skips control-plane targets that kind does not expose.
+- Grafana reads its admin credentials from the Kubernetes Secret grafana-admin and loads dashboards through the sidecar.
+- The Helm chart ships a ServiceMonitor for the backend and the ShelfLife API Grafana dashboard (backend pods up, requests per second, error ratio, p95 latency, requests by endpoint, responses by status class, p50/p95/p99 latency, pantry items by status, pantry actions per minute).
 
-Probe and metrics endpoints are excluded from HTTP traffic metrics so the dashboard reflects real API traffic.
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack --version 92.3.1 \
+  -n monitoring -f monitoring/prometheus-values.yaml -f monitoring/grafana-values.yaml --wait --timeout 10m
+kubectl -n monitoring port-forward svc/monitoring-kube-prometheus-prometheus 9090:9090
+kubectl -n monitoring port-forward svc/monitoring-grafana 3001:80
+scripts/generate-traffic.sh http://shelflife.localtest.me:8088 180
 
-## Prometheus + Grafana
+Ingress URLs on kind: http://prometheus.localtest.me:8088/targets and http://grafana.localtest.me:8088.
 
-The project uses:
+Verified Result (kind)
 
-```text
-kube-prometheus-stack
-```
-
-with:
-
-* Prometheus Operator
-* Prometheus
-* Grafana
-
-Prometheus:
-
-* Selects ServiceMonitors across namespaces.
-* Uses 2-day retention.
-* Disables unnecessary control-plane targets.
-
-Grafana credentials are loaded from:
-
-```text
-grafana-admin
-```
-
-The bundled **ShelfLife API** dashboard displays:
-
-* Backend pods up
-* Requests per second
-* Error ratio
-* p95 latency
-* Requests by endpoint
-* Responses by status class
-* p50/p95/p99 latency
-* Pantry items by status
-* Pantry actions per minute
-
-## Access
-
-Prometheus:
-
-```text
-http://prometheus.localtest.me:8088/targets
-```
-
-Grafana:
-
-```text
-http://grafana.localtest.me:8088
-```
-
-Retrieve the Grafana password:
-
-```bash
-kubectl -n monitoring get secret grafana-admin \
-  -o jsonpath='{.data.admin-password}' | base64 -d
-echo
-```
-
-Generate traffic for the dashboard:
-
-```bash
-scripts/generate-traffic.sh \
-  http://shelflife.localtest.me:8088 \
-  180
-```
-
-## Port-Forward Fallback
-
-Prometheus:
-
-```bash
-kubectl -n monitoring port-forward \
-  svc/monitoring-kube-prometheus-prometheus \
-  9090:9090
-```
-
-Grafana:
-
-```bash
-kubectl -n monitoring port-forward \
-  svc/monitoring-grafana \
-  3001:80
-```
+┌────────────┬──────────────────────────────────────────────────────────┬──────────┐
+│   Check    │                          Result                          │ Evidence │
+├────────────┼──────────────────────────────────────────────────────────┼──────────┤
+│ curl       │ http_requests_total and shelflife_* series returned in   │ E18      │
+│ /metrics   │ Prometheus format                                        │          │
+├────────────┼──────────────────────────────────────────────────────────┼──────────┤
+│ Prometheus │ serviceMonitor/shelflife/shelflife-backend/0 and         │          │
+│  Targets   │ serviceMonitor/shelflife-gitops/shelflife-backend/0,     │ E19      │
+│            │ each 2/2 UP                                              │          │
+├────────────┼──────────────────────────────────────────────────────────┼──────────┤
+│ Grafana    │ 2 backend pods up, 0.199 req/s, p95 latency 99.7 ms;     │          │
+│ "ShelfLife │ endpoint, status-class, latency and pantry-status panels │ E20      │
+│  API"      │  populated                                               │          │
+└────────────┴──────────────────────────────────────────────────────────┴──────────┘
 
 ---
 
-# 12. Configuration Reference
+13. Configuration Reference
 
-## Backend Environment Variables
+Backend Environment Variables
 
-| Variable              | Default                 | Purpose                        |
-| --------------------- | ----------------------- | ------------------------------ |
-| `DATABASE_URL`        | —                       | Full SQLAlchemy connection URL |
-| `DB_HOST`             | `localhost`             | PostgreSQL host                |
-| `DB_PORT`             | `5432`                  | PostgreSQL port                |
-| `DB_NAME`             | `shelflife`             | Database name                  |
-| `DB_USER`             | `shelflife`             | Database user                  |
-| `DB_PASSWORD`         | empty                   | Database password              |
-| `DB_WAIT_SECONDS`     | `60`                    | PostgreSQL startup wait        |
-| `EXPIRY_WARNING_DAYS` | `3`                     | Expiry warning window          |
-| `APP_TIMEZONE`        | `Asia/Kolkata`          | Determines "today"             |
-| `CORS_ORIGINS`        | `http://localhost:5173` | Allowed origins                |
-| `ENVIRONMENT`         | `local`                 | Runtime environment            |
-| `APP_VERSION`         | `dev`                   | Git commit SHA / version       |
+┌────────────────────────┬──────────────────────────┬──────────────────────────────┐
+│        Variable        │         Default          │           Purpose            │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ DATABASE_URL           │ —                        │ Full SQLAlchemy URL (takes   │
+│                        │                          │ precedence over DB_*)        │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ DB_HOST / DB_PORT /    │ localhost / 5432 /       │ PostgreSQL location          │
+│ DB_NAME                │ shelflife                │                              │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ DB_USER / DB_PASSWORD  │ shelflife / empty        │ PostgreSQL credentials       │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ DB_WAIT_SECONDS        │ 60                       │ Start-up wait for PostgreSQL │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ EXPIRY_WARNING_DAYS    │ 3                        │ Expiry warning window        │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ APP_TIMEZONE           │ Asia/Kolkata             │ Determines "today"           │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ CORS_ORIGINS           │ http://localhost:5173    │ Allowed origins              │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ ENVIRONMENT            │ local                    │ Runtime environment label    │
+├────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ APP_VERSION            │ dev                      │ Version shown in the UI      │
+│                        │                          │ (commit SHA in CI builds)    │
+└────────────────────────┴──────────────────────────┴──────────────────────────────┘
 
-`DATABASE_URL` takes precedence over the individual `DB_*` settings.
+Other Configuration
 
-## Frontend
-
-The Nginx container uses:
-
-```text
-BACKEND_URL
-```
-
-Default:
-
-```text
-http://backend:8000
-```
-
-## Docker Compose
-
-Compose configuration is documented in:
-
-```text
-.env.example
-```
-
-## Terraform
-
-Terraform configuration is documented in:
-
-```text
-terraform/variables.tf
-terraform/terraform.tfvars.example
-```
+┌────────────────────────┬─────────────────────────────────────────────────────────┐
+│       Component        │                        Location                         │
+├────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Frontend Nginx         │ BACKEND_URL (default http://backend:8000)               │
+│ upstream               │                                                         │
+├────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Docker Compose         │ .env.example                                            │
+│ overrides              │                                                         │
+├────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Terraform inputs       │ terraform/variables.tf,                                 │
+│                        │ terraform/terraform.tfvars.example                      │
+├────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Helm values            │ helm/shelflife/values*.yaml                             │
+├────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Monitoring values      │ monitoring/*.yaml                                       │
+└────────────────────────┴─────────────────────────────────────────────────────────┘
 
 ---
 
-# 13. Known Limitations and Production Considerations
+14. Known Issues and Limitations
 
-- **Database durability:** PostgreSQL is ephemeral in the demo configuration, runs as a single replica, and has no backups. Production deployments should use Amazon RDS or properly configured persistent storage with backups.
-- **Terraform state:** Terraform state is stored locally. Production environments should use a remote backend with state locking.
-- **Networking:** EKS worker nodes use public subnets to avoid NAT Gateway costs. Production architectures would typically place worker nodes in private subnets with appropriate outbound connectivity.
-- **Storage driver:** Terraform does not install the Amazon EBS CSI driver, limiting EBS-backed persistent volume provisioning.
-- **GitOps promotion:** Automated promotion commits directly to `main`. Protected branches should use pull requests and appropriate approval checks.
-- **Metrics freshness:** The `shelflife_pantry_items` gauge refreshes when `/api/summary` is called.
-- **Local DNS:** The `*.localtest.me` hostnames must resolve to `127.0.0.1` for the local ingress URLs to work. If they do not resolve correctly, add the following entries to your hosts file:
-
-  ```text
-  127.0.0.1 shelflife.localtest.me
-  127.0.0.1 shelflife-gitops.localtest.me
-  127.0.0.1 grafana.localtest.me
-  127.0.0.1 prometheus.localtest.me
-  ```
-
-- **Platform compatibility:** Windows may not preserve executable permissions on shell scripts. Run scripts through Bash or WSL if necessary.
+- Application not deployed to EKS: the Kubernetes, Argo CD, Prometheus and Grafana results come from the local kind cluster. The EKS cluster was provisioned with Terraform, verified with two Ready nodes, and destroyed. values-eks.yaml is provided but was not used for a recorded deployment.
+- Database durability: PostgreSQL runs as a single-replica StatefulSet without backups. On kind it uses a 1 GiB PersistentVolumeClaim; values-eks.yaml disables persistence because the EBS CSI driver is not installed by Terraform. A production deployment would use Amazon RDS or persistent storage with backups.
+- Terraform state: state is stored locally. A team setup would use a remote backend with locking.
+- Network design: worker nodes use public subnets to avoid NAT gateway cost; production designs would place them in private subnets.
+- Infrastructure scan findings: trivy config reports five HIGH/CRITICAL items in terraform/main.tf, all accepted cost/demo trade-offs: the EKS API endpoint is public and cluster_endpoint_public_access_cidrs defaults to 0.0.0.0/0, Kubernetes secrets are not envelope-encrypted with KMS, and the public subnets assign public IPs. Helm, Kubernetes and Dockerfile configurations have no HIGH/CRITICAL findings.
+- GitOps promotion: the pipeline commits the promotion directly to main; a protected-branch setup would use pull requests.
+- Metrics freshness: the shelflife_pantry_items gauge refreshes when /api/summary is called.
+- Grafana error panel: the error-ratio panel shows No data until a 4xx/5xx response has been recorded; scripts/generate-traffic.sh deliberately requests a missing item to produce 404 responses.
+- Local DNS: the *.localtest.me hostnames must resolve to 127.0.0.1; if they do not, add them to the hosts file.
+- Windows: shell scripts are intended for Bash or WSL.
 
 ---
 
-# 14. Presentation and Evidence
+15. Presentation, Video and Evidence
 
-The repository includes supporting presentation and demonstration material.
+Deliverables in demo/
 
-## Presentation
+┌────────────────────────────────────┬──────────────────────────────────────────┐
+│            Deliverable             │                 Location                 │
+├────────────────────────────────────┼──────────────────────────────────────────┤
+│ Presentation video (MP4)           │ demo/shelflife-walkthrough.mp4           │
+├────────────────────────────────────┼──────────────────────────────────────────┤
+│ Slide deck (PowerPoint, 19 slides) │ demo/presentation.pptx                   │
+├────────────────────────────────────┼──────────────────────────────────────────┤
+│ Slide deck (PDF)                   │ demo/slides.pdf                          │
+├────────────────────────────────────┼──────────────────────────────────────────┤
+│ Evidence screenshots               │ demo/evidence/ (demo/evidence/README.md) │
+└────────────────────────────────────┴──────────────────────────────────────────┘
 
-```text
-demo/presentation.pptx
-```
+The slide deck covers the project overview, technology stack, architecture diagram, codebase and local run, testing, CI/CD flow, DevSecOps, Terraform and AWS, Kubernetes and Helm, GitOps, observability, alternatives and trade-offs, results and key learnings. AWS account IDs are masked in the slide copies of the console screenshots.
 
-Contains:
+Walkthrough Coverage
 
-* Project architecture
-* CI/CD pipeline
-* Infrastructure
-* Kubernetes
-* GitOps
-* Observability
-* Trade-offs
-* Learnings
+The walkthrough follows the order required by SUBMISSION.md:
 
-## Evidence
+┌─────┬────────────────────────────────────────────────────┬────────────────────────┐
+│  #  │                       Topic                        │  Supporting evidence   │
+├─────┼────────────────────────────────────────────────────┼────────────────────────┤
+│ 1   │ Slides: what was built and the architecture        │ demo/presentation.pptx │
+├─────┼────────────────────────────────────────────────────┼────────────────────────┤
+│ 2   │ Codebase: folder structure and key files           │ E03                    │
+├─────┼────────────────────────────────────────────────────┼────────────────────────┤
+│ 3   │ CI/CD: push to main and GitHub Actions run         │ E06, E07, E08          │
+├─────┼────────────────────────────────────────────────────┼────────────────────────┤
+│ 4   │ Terraform: terraform plan and AWS Console (VPC +   │ E09–E12                │
+│     │ EKS)                                               │                        │
+├─────┼────────────────────────────────────────────────────┼────────────────────────┤
+│ 5   │ Argo CD: synced application and GitOps flow        │ E17                    │
+├─────┼────────────────────────────────────────────────────┼────────────────────────┤
+│ 6   │ Kubernetes: pods, services and Ingress             │ E13–E16                │
+├─────┼────────────────────────────────────────────────────┼────────────────────────┤
+│ 7   │ Prometheus: Targets page with the application UP   │ E19                    │
+├─────┼────────────────────────────────────────────────────┼────────────────────────┤
+│ 8   │ Grafana: live dashboard with application metrics   │ E20                    │
+└─────┴────────────────────────────────────────────────────┴────────────────────────┘
 
-```text
-demo/evidence/
-```
+Evidence Index
 
-Contains screenshots from real project runs, including:
+All screenshots were captured from real runs on 14–15 October 2026.
 
-* GitHub Actions
-* GHCR
-* Trivy
-* Terraform
-* AWS Console
-* Kubernetes
-* Argo CD
-* Prometheus
-* Grafana
+┌─────┬───────────────────────────────────────────────────┬────────────────────────┐
+│ ID  │                       File                        │         Shows          │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E01 │ E01-app-browser.png                               │ UI at                  │
+│     │ (demo/evidence/E01-app-browser.png)               │ http://localhost:3000  │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│     │ E02-docker-compose-up.png                         │ docker compose up      │
+│ E02 │ (demo/evidence/E02-docker-compose-up.png)         │ --build, three healthy │
+│     │                                                   │  containers            │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E03 │ E03-github-repo-codebase.png                      │ Repository, README,    │
+│     │ (demo/evidence/E03-github-repo-codebase.png)      │ passing CI badge       │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E04 │ E04-pytest.png (demo/evidence/E04-pytest.png)     │ pytest -v: 17 passed   │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E05 │ E05-commit-history.png                            │ Commit history         │
+│     │ (demo/evidence/E05-commit-history.png)            │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E06 │ E06-github-actions-green.png                      │ Successful pipeline    │
+│     │ (demo/evidence/E06-github-actions-green.png)      │ run on main            │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│     │ E07-trivy-scan-backend.png                        │                        │
+│ E07 │ (demo/evidence/E07-trivy-scan-backend.png),       │ Trivy scan steps for   │
+│     │ E07-trivy-scan-frontend.png                       │ both images            │
+│     │ (demo/evidence/E07-trivy-scan-frontend.png)       │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│     │ E08-ghcr-packages-backend.png                     │                        │
+│ E08 │ (demo/evidence/E08-ghcr-packages-backend.png),    │ GHCR packages with SHA │
+│     │ E08-ghcr-packages-frontend.png                    │  tags                  │
+│     │ (demo/evidence/E08-ghcr-packages-frontend.png)    │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│     │ E09-terraform-plan.png                            │                        │
+│ E09 │ (demo/evidence/E09-terraform-plan.png),           │ terraform plan and     │
+│     │ E09-terraform-apply.png                           │ apply                  │
+│     │ (demo/evidence/E09-terraform-apply.png)           │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│     │ E10-aws-vpc.png (demo/evidence/E10-aws-vpc.png),  │ VPC and two public     │
+│ E10 │ E10-aws-subnets.png                               │ subnets                │
+│     │ (demo/evidence/E10-aws-subnets.png)               │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│     │ E11-aws-eks.png (demo/evidence/E11-aws-eks.png),  │ EKS node group and     │
+│ E11 │ E11-aws-eks-nodes.png                             │ Ready nodes            │
+│     │ (demo/evidence/E11-aws-eks-nodes.png)             │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│     │ E12-terraform-destroy.png                         │                        │
+│ E12 │ (demo/evidence/E12-terraform-destroy.png),        │ terraform destroy and  │
+│     │ E12-aws-leftovers-check.png                       │ leftover check         │
+│     │ (demo/evidence/E12-aws-leftovers-check.png)       │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E13 │ E13-kubernetes-resources.png                      │ Pods, services and     │
+│     │ (demo/evidence/E13-kubernetes-resources.png)      │ Ingress (kind)         │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E14 │ E14-kubernetes-services.png                       │ ClusterIP services     │
+│     │ (demo/evidence/E14-kubernetes-services.png)       │ (kind)                 │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E15 │ E15-helm-release.png                              │ helm list (kind)       │
+│     │ (demo/evidence/E15-helm-release.png)              │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E16 │ E16-app-via-ingress.png                           │ Application through    │
+│     │ (demo/evidence/E16-app-via-ingress.png)           │ the Ingress (kind)     │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E17 │ E17-argocd-synced.png                             │ Argo CD Synced and     │
+│     │ (demo/evidence/E17-argocd-synced.png)             │ Healthy (kind)         │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E18 │ E18-metrics-endpoint.png                          │ /metrics output        │
+│     │ (demo/evidence/E18-metrics-endpoint.png)          │                        │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E19 │ E19-prometheus-targets-up.png                     │ Prometheus targets UP  │
+│     │ (demo/evidence/E19-prometheus-targets-up.png)     │ (kind)                 │
+├─────┼───────────────────────────────────────────────────┼────────────────────────┤
+│ E20 │ E20-grafana-dashboard.png                         │ Grafana dashboard      │
+│     │ (demo/evidence/E20-grafana-dashboard.png)         │ (kind)                 │
+└─────┴───────────────────────────────────────────────────┴────────────────────────┘
 
-## Walkthrough Video
+---
 
-```text
+16. Rubric Coverage
+
+Module: M1 Application
+Requirement: FastAPI /health; ≥ 4 REST endpoints (GET, POST, PUT, DELETE); PostgreSQL
+with Alembic; React UI
+Implementation: backend/app/, backend/alembic/versions/, backend/requirements.txt,
+frontend/, docker-compose.yml
+Evidence: E01
+────────────────────────────────────────
+Module: M2 Testing
+Requirement: pytest passes; ≥ 5 tests across ≥ 3 endpoints; test database;
+pytest.ini/conftest.py
+Implementation: 17 tests in backend/tests/ on SQLite; backend/pytest.ini,
+backend/tests/conftest.py
+Evidence: E04
+────────────────────────────────────────
+Module: M3 Git and GitHub
+Requirement: Public repository; meaningful commits; .gitignore covers .env, __pycache__,
+node_modules, .venv
+Implementation: Conventional commit history; .gitignore also covers Terraform state and
+kubeconfig
+Evidence: E03, E05
+────────────────────────────────────────
+Module: M4 Docker
+Requirement: Backend Dockerfile; multi-stage frontend (Node + Nginx); non-root images;
+docker compose up --build
+Implementation: backend/Dockerfile (UID 10001), frontend/Dockerfile (UID 101),
+docker-compose.yml
+Evidence: E01, E02
+────────────────────────────────────────
+Module: M5 CI/CD
+Requirement: Workflow on push to main; pytest gate; frontend build; both images; GHCR;
+SHA tags
+Implementation: .github/workflows/ci-cd.yml
+Evidence: E06, E08
+────────────────────────────────────────
+Module: M6 Trivy
+Requirement: Scan both images in CI; fail on HIGH/CRITICAL; explanation
+Implementation: images job; docs/TRIVY.md
+Evidence: E07
+────────────────────────────────────────
+Module: M7 Terraform
+Requirement: Valid HCL; init; non-empty plan; VPC with 2 public subnets; EKS with node
+group; destroy; terraform.tfvars.example
+Implementation: terraform/
+Evidence: E09–E12
+────────────────────────────────────────
+Module: M8 Kubernetes + Helm
+Requirement: k8s/namespace.yaml; Helm chart; helm upgrade --install; 2+ replicas each;
+ClusterIP services; Ingress / and /api; pods Running
+Implementation: k8s/, helm/shelflife/ (kind)
+Evidence: E13–E16
+────────────────────────────────────────
+Module: M9 Observability
+Requirement: /metrics; Prometheus scraping; Grafana accessible; live application panels
+Implementation: backend/app/metrics.py, monitoring/, ServiceMonitor and dashboard in the
+chart (kind)
+Evidence: E18–E20
+────────────────────────────────────────
+Module: M10 Presentation + Documentation
+Requirement: Root README; walkthrough video and slide deck in demo/
+Implementation: This README; demo/presentation.pptx, demo/slides.pdf,
 demo/shelflife-walkthrough.mp4
-```
-
-Added once the recording is complete.
-
-## Trivy Documentation
-
-```text
-docs/TRIVY.md
-```
-
-Contains the image scanning approach and results.
+Evidence: —
+────────────────────────────────────────
+Module: Video: Argo CD
+Requirement: Synced application and GitOps flow
+Implementation: argocd/application.yaml, helm/shelflife/values-gitops.yaml,
+gitops-promote job
+Evidence: E17
 
 ---
 
-## Summary
+Summary
 
-ShelfLife is intentionally small as an application, but demonstrates a complete modern DevSecOps workflow:
+ShelfLife is a small, complete three-tier application carried through a full DevSecOps workflow:
 
-```text
-React + FastAPI
-       ↓
-PostgreSQL
-       ↓
-Docker
-       ↓
-Automated Testing
-       ↓
-GitHub Actions
-       ↓
-Trivy Security Scanning
-       ↓
-GHCR
-       ↓
-Kubernetes / kind
-       ↓
-Helm
-       ↓
-AWS EKS
-       ↓
-Argo CD GitOps
-       ↓
-Prometheus + Grafana
-```
-
-The result is a complete path from **local development → testing → secure containerisation → CI/CD → Kubernetes → GitOps → cloud infrastructure → observability**.
+React + FastAPI + PostgreSQL
+   → pytest and Ruff quality gates
+   → multi-stage, non-root Docker images
+   → GitHub Actions CI/CD with commit-SHA tags
+   → Trivy security gate
+   → GHCR
+   → Helm on Kubernetes (kind) with Traefik Ingress
+   → Argo CD GitOps
+   → Prometheus and Grafana
+   + Terraform-provisioned AWS VPC and EKS (provisioned, verified and destroyed)

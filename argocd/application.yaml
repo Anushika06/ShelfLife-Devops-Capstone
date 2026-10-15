@@ -2,7 +2,7 @@
 # "shelflife-gitops" in sync with helm/shelflife + values-gitops.yaml.
 # Apply ONCE from your machine (this file is outside the synced path):
 #   kubectl apply -f argocd/application.yaml
-# Before applying, replace Anushika06 / ShelfLife-Devops-Capstone
+# If you fork the repository, point repoURL at your fork first
 # (scripts/set-github-repo.sh <owner> <repo> does it for you).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
