@@ -4,13 +4,13 @@
 backend:
   image:
     repository: ghcr.io/anushika06/shelflife-backend
-    tag: 90d19cdd6aaf599876eff6bf770ee45b4daba2c7
+    tag: b0e00218e24f51b116d93052e4ea54aefe0aca37
   config:
     environment: gitops
 frontend:
   image:
     repository: ghcr.io/anushika06/shelflife-frontend
-    tag: 90d19cdd6aaf599876eff6bf770ee45b4daba2c7
+    tag: b0e00218e24f51b116d93052e4ea54aefe0aca37
 ingress:
   host: shelflife-gitops.localtest.me
 metrics:
