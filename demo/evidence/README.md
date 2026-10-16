@@ -39,5 +39,3 @@ is masked; the originals below are unchanged.
 - Kubernetes, Argo CD, Prometheus and Grafana screenshots come from the local **kind** cluster.
   The EKS cluster was provisioned and destroyed for the Terraform evidence only.
 - The EKS run used `t3.small` nodes via the git-ignored `terraform.tfvars`; the code default is `t3.medium`.
-- The Grafana "Error ratio" panel shows *No data* because no 4xx/5xx responses had been recorded
-  in that 30-minute window.
