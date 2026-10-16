@@ -57,8 +57,8 @@ The application itself was **not** deployed to EKS; the EKS cluster demonstrates
 | --- | --- | --- |
 | Application | React UI, FastAPI and PostgreSQL running with Docker Compose; all three containers healthy | E01, E02 |
 | Testing | `pytest -v`: 17 of 17 tests passed on an isolated SQLite database | E04 |
-| Git | Public repository; 20 commits on `main` (17 authored with conventional messages, 3 automated GitOps promotions) | E03, E05 |
-| CI/CD | GitHub Actions run #2 on `main`: all 7 jobs succeeded in 4 m 2 s | E06 |
+| Git | Public repository; 17 commits on `main` visible in the commit log | E03, E05 |
+| CI/CD | GitHub Actions run #5 on `main`: all 7 jobs succeeded in 3 m 30 s | E06 |
 | Registry | Backend and frontend images in GHCR, tagged with the full commit SHA | E08 |
 | Security | Trivy gate passed for both images: no fixable HIGH/CRITICAL vulnerabilities | E07 |
 | Terraform | Plan: 16 to add; apply: 16 added in `ap-south-1`; destroy: 16 destroyed; leftover check clean | E09–E12 |
@@ -319,7 +319,7 @@ Jobs 4–7 run their push, deploy and promote steps only for pushes to `main`; p
 * **Ordered promotions:** runs on `main` are queued so GitOps promotions happen in commit order; superseded pull-request runs are cancelled.
 * **No CI loop:** promotion commits are marked `[skip ci]` and are made with `GITHUB_TOKEN`, which does not trigger another workflow.
 
-**Verified result:** [run #2 on `main`, commit `b728abc`](https://github.com/Anushika06/ShelfLife-Devops-Capstone/actions/runs/38564197363) completed all 7 jobs successfully in 4 m 2 s with 6 artifacts (E06). Both images were published to GHCR as `ghcr.io/anushika06/shelflife-backend:<sha>` and `ghcr.io/anushika06/shelflife-frontend:<sha>` (E08).
+**Verified result:** [run #5 on `main`, commit `ff5e07d`](https://github.com/Anushika06/ShelfLife-Devops-Capstone/actions/runs/38731595301) completed all 7 jobs successfully in 3 m 30 s with 6 artifacts (E06). Both images were published to GHCR as `ghcr.io/anushika06/shelflife-backend:<sha>` and `ghcr.io/anushika06/shelflife-frontend:<sha>` (E08).
 
 ---
 
@@ -338,7 +338,7 @@ trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 <image>:<git
 * Any remaining finding fails the job, so a vulnerable image is never pushed.
 * The scan report is added to the workflow summary and uploaded as an artifact.
 
-**Result (run #2, commit `b728abc`):** Trivy scanned the operating-system packages and the Python dependencies inside both images. The frontend image (Alpine 3.24.2) reported 0 vulnerabilities, and the backend scan step passed with `--exit-code 1`, with every Python package in the virtual environment reported as `0`. No fixable HIGH or CRITICAL vulnerability was found, so the gate passed and both images were published (E07).
+**Result (run #5, commit `ff5e07d`):** Trivy scanned the operating-system packages and the Python dependencies inside both images. The frontend image (Alpine 3.24.2) reported 0 vulnerabilities, and the backend scan step passed with `--exit-code 1`, with every Python package in the virtual environment reported as `0`. No fixable HIGH or CRITICAL vulnerability was found, so the gate passed and both images were published (E07).
 
 During development, a local scan of the backend image found four HIGH findings in libraries vendored inside `pip` (urllib3, msgpack and setuptools metadata). The application never uses `pip` at runtime, so the Dockerfile removes `pip` and `ensurepip` from the runtime stage; the rebuilt image reported no HIGH/CRITICAL findings. Full details: [`docs/TRIVY.md`](docs/TRIVY.md).
 
@@ -360,7 +360,7 @@ During development, a local scan of the backend image found four HIGH findings i
 * AWS credentials are read by Terraform from the standard AWS CLI credential chain, never from files in the repository.
 * The database password reaches the backend through a Kubernetes Secret; Grafana and Argo CD admin credentials are also held in Kubernetes Secrets.
 * The values `change-me-local-only` (`.env.example`), `change-me-demo-only` (Helm `values.yaml`) and `ci-only-password` (CI service container) are non-secret placeholders for local, demo and CI use. The chart supports `postgres.auth.existingSecret` for real deployments.
-* The Git history was scanned with gitleaks (all 20 commits) and searched for access keys, tokens, private keys, `.env` files and Terraform state: no secrets were found.
+* The Git history was scanned with gitleaks and searched for access keys, tokens, private keys, `.env` files and Terraform state: no secrets were found.
 
 ---
 
@@ -563,7 +563,7 @@ Ingress URLs on kind: `http://prometheus.localtest.me:8088/targets` and `http://
 | --- | --- | --- |
 | `curl /metrics` | `http_requests_total` and `shelflife_*` series returned in Prometheus format | E18 |
 | Prometheus Targets | `serviceMonitor/shelflife/shelflife-backend/0` and `serviceMonitor/shelflife-gitops/shelflife-backend/0`, each 2/2 **UP** | E19 |
-| Grafana "ShelfLife API" | 2 backend pods up, 0.199 req/s, p95 latency 99.7 ms; endpoint, status-class, latency and pantry-status panels populated | E20 |
+| Grafana "ShelfLife API" | 4 backend pods up, 7.32 req/s, p95 latency 95.2 ms, error ratio 25.0%; endpoint, status-class, latency and pantry-status panels populated | E20 |
 
 ---
 
