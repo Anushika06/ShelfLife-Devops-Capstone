@@ -39,3 +39,4 @@ is masked; the originals below are unchanged.
 - Kubernetes, Argo CD, Prometheus and Grafana screenshots come from the local **kind** cluster.
   The EKS cluster was provisioned and destroyed for the Terraform evidence only.
 - The EKS run used `t3.small` nodes via the git-ignored `terraform.tfvars`; the code default is `t3.medium`.
+- The error ratio is around 25% because we intentionally sent requests for nonexistent items to generate 404 responses and demonstrate how Grafana monitors API errors.
