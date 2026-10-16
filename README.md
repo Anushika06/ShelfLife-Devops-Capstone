@@ -8,7 +8,7 @@
 | **Group** | Group-A |
 | **Repository** | https://github.com/Anushika06/ShelfLife-Devops-Capstone |
 | **Slide deck** | [`demo/presentation.pptx`](demo/presentation.pptx) · [`demo/slides.pdf`](demo/slides.pdf) |
-| **Walkthrough video** | `demo/shelflife-walkthrough.mp4` |
+| **Walkthrough video** | [`demo/shelflife-walkthrough.mp4`](https://youtu.be/a4cljmyVxSE) |
 | **Evidence** | [`demo/evidence/`](demo/evidence/README.md) (26 screenshots) |
 
 ShelfLife is a pantry and expiry tracker for a household's **fridge, freezer and pantry**. It answers one question first:
@@ -616,7 +616,7 @@ Ingress URLs on kind: `http://prometheus.localtest.me:8088/targets` and `http://
 
 | Deliverable | Location |
 | --- | --- |
-| Presentation video (MP4) | `demo/shelflife-walkthrough.mp4` |
+| Presentation video (MP4) | [`demo/shelflife-walkthrough.mp4`](https://youtu.be/a4cljmyVxSE) |
 | Slide deck (PowerPoint, 19 slides) | [`demo/presentation.pptx`](demo/presentation.pptx) |
 | Slide deck (PDF) | [`demo/slides.pdf`](demo/slides.pdf) |
 | Evidence screenshots | [`demo/evidence/`](demo/evidence/README.md) |
